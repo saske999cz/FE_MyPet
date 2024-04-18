@@ -11,6 +11,12 @@ import logout from "../assets/icons/logout.png";
 import eyeHide from "../assets/icons/eye-hide.png";
 import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
+import { faStore } from '@fortawesome/free-solid-svg-icons/faStore'
+import { faHome } from '@fortawesome/free-solid-svg-icons/faHome'
+import { faVideo } from '@fortawesome/free-solid-svg-icons'
+import { faBars } from '@fortawesome/free-solid-svg-icons/faBars'
+import { faPaw } from '@fortawesome/free-solid-svg-icons/faPaw'
+import { faCalendarCheck } from "@fortawesome/free-solid-svg-icons";
 
 export default {
   play,
@@ -26,4 +32,10 @@ export default {
   logout,
   eyeHide,
   eye,
+  faHome,
+  faVideo,
+  faStore,
+  faBars,
+  faPaw,
+  faCalendarCheck
 };
