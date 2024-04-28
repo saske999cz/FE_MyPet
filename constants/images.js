@@ -7,6 +7,26 @@ import logoBlack from "../assets/images/LogoBlack.png";
 import logoSmall from "../assets/images/logo-small.png";
 import empty from "../assets/images/empty.png";
 import splashPet from "../assets/images/SplashPet.png";
+import avatar from "../assets/images/avatarexample.jpg";
+import husky from "../assets/images/husky.jpg";
+import goldenretriever from "../assets/images/goldenretriever.jpg";
+import avatar1 from "../assets/images/avatar1.jpg";
+import avatar2 from "../assets/images/avatar2.jpg";
+import pomeranian from "../assets/images/pomeranian.jpeg";
+import dogleash from "../assets/images/dogleash.jpg";
+import dogbowl from "../assets/images/dogbowl.jpg";
+import dogfood from "../assets/images/dogfood.png";
+import dogtoy from "../assets/images/dogtoy.jpg";
+import pet from "../assets/images/pet.png";
+import cat from "../assets/images/cat.png";
+import bird from "../assets/images/bird.png";
+import dog from "../assets/images/dog.png";
+import adopt1 from '../assets/images/adopt1.png';
+import adopt2 from '../assets/images/adopt2.png';
+import adopt3 from '../assets/images/adopt3.jpg';
+import adopt4 from '../assets/images/adopt4.jpg';
+import adopt5 from '../assets/images/adopt5.jpg';
+import adopt6 from '../assets/images/adopt6.jpg';
 
 
-export default { profile, thumbnail, cards, path, logoWhite, logoBlack, logoSmall, empty, splashPet };
+export default { profile, thumbnail, cards, path, logoWhite, logoBlack, logoSmall, empty, splashPet, avatar, husky, goldenretriever, avatar1, avatar2, pomeranian, dogbowl, dogfood, dogleash, dogtoy, pet, cat, bird, dog, adopt1, adopt2, adopt3, adopt4, adopt5, adopt6};
