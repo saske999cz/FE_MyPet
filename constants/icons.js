@@ -13,10 +13,21 @@ import eye from "../assets/icons/eye.png";
 import play from "../assets/icons/play.png";
 import { faStore } from '@fortawesome/free-solid-svg-icons/faStore'
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome'
-import { faVideo } from '@fortawesome/free-solid-svg-icons'
+import { faCar, faVideo } from '@fortawesome/free-solid-svg-icons'
 import { faBars } from '@fortawesome/free-solid-svg-icons/faBars'
 import { faPaw } from '@fortawesome/free-solid-svg-icons/faPaw'
 import { faCalendarCheck } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass } from "@fortawesome/free-solid-svg-icons";
+import { faPen } from "@fortawesome/free-solid-svg-icons";
+import { faThumbsUp } from "@fortawesome/free-solid-svg-icons";
+import { faThumbsDown } from "@fortawesome/free-solid-svg-icons";
+import { faComment } from "@fortawesome/free-solid-svg-icons";
+import { faHeart } from "@fortawesome/free-solid-svg-icons";
+import { faCartShopping } from "@fortawesome/free-solid-svg-icons";
+import { faFilter } from "@fortawesome/free-solid-svg-icons";
+import { faLocationDot } from "@fortawesome/free-solid-svg-icons";
+import { faMars } from "@fortawesome/free-solid-svg-icons";
+import { faVenus } from "@fortawesome/free-solid-svg-icons";
 
 export default {
   play,
@@ -37,5 +48,16 @@ export default {
   faStore,
   faBars,
   faPaw,
-  faCalendarCheck
+  faCalendarCheck,
+  faMagnifyingGlass,
+  faPen,
+  faThumbsUp,
+  faThumbsDown,
+  faComment,
+  faHeart,
+  faCartShopping,
+  faFilter,
+  faLocationDot,
+  faMars,
+  faVenus
 };

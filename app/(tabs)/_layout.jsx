@@ -7,9 +7,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 
 const TabIcon = ({icon, name, color, focused}) => {
     return (
-        <View className="items-center justify-center gap-2">
+        <View className="items-center justify-center gap-1">
             <FontAwesomeIcon icon={icon} size={20} style={{color: color}}/>
-            <Text className={`text-xs ${focused ? 'text-primary' : 'text-gray-500'}`} style={{color: color}}>{name}</Text>
+            <Text className={`text-[10px]`} style={focused ? {color:color} : {color:"#374151"} }>{name}</Text>
         </View>
     )
 }
@@ -20,7 +20,7 @@ const TabsLayout = () => {
         <Tabs
         screenOptions={{
             tabBarShowLabel: false,
-            tabBarActiveTintColor:"#16a34a",
+            tabBarActiveTintColor:"#fb923c",
             tabBarInactiveTintColor: "#CDCDE0",
         }}>
             <Tabs.Screen 
