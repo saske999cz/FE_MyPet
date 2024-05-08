@@ -1,9 +1,9 @@
-import { View, Text, Image, Touchable, TouchableOpacity } from "react-native";
+import { View, Text, Image, TouchableOpacity } from "react-native";
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../constants";
 
-const MinimalPost = ({
+const MyMinimalPost = ({
   id,
   avatar,
   username,
@@ -16,10 +16,20 @@ const MinimalPost = ({
 }) => {
   return (
     <TouchableOpacity>
-      <View className="flex-col items-center w-full border-t-4 border-gray-300 pb-4 px-3">
-        <View className="flex-row justify-start items-center w-full h-10 mt-2">
-          <Image source={avatar} className="w-9 h-9 rounded-full" />
-          <Text className="ml-4 text-[16px] font-semibold">{username}</Text>
+      <View className="w-full flex-col items-center jusify-start border-b-4 border-gray-300 pb-4 px-4">
+        <View className="flex-row justify-between items-center w-full h-10 mt-2">
+          <View className="w-[90%] flex-row items-center justify-start">
+            <Image source={avatar} className="w-9 h-9 rounded-full" />
+            <Text className="ml-4 text-[16px] font-semibold">{username}</Text>
+          </View>
+
+          <TouchableOpacity className="w-8 h-8 rounded-full flex-row items-center justify-center">
+            <FontAwesomeIcon
+              icon={icons.faEllipsis}
+              size={20}
+              style={{ color: "#000000" }}
+            />
+          </TouchableOpacity>
         </View>
         <View className="w-full h-10 flex-row justify-start items-center">
           <View className="bg-[#fed7aa] rounded-xl w-16 h-5 items-center justify-center">
@@ -27,9 +37,11 @@ const MinimalPost = ({
               #Title:
             </Text>
           </View>
-          <Text className="ml-4 text-[15px] font-semibold text-gray-600">
-            {title}
-          </Text>
+          <View className="flex-1">
+            <Text className="ml-4 text-[15px] font-semibold text-gray-600">
+              {title}
+            </Text>
+          </View>
         </View>
         <View className="w-full h-fit max-h-28">
           <Text className="text-[15px]">{description}</Text>
@@ -96,4 +108,4 @@ const MinimalPost = ({
   );
 };
 
-export default MinimalPost;
+export default MyMinimalPost;
