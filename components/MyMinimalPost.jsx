@@ -2,6 +2,8 @@ import { View, Text, Image, TouchableOpacity } from "react-native";
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../constants";
+import DynamicImageGrid from "./DynamicImageGrid";
+import { router } from "expo-router";
 
 const MyMinimalPost = ({
   id,
@@ -13,17 +15,36 @@ const MyMinimalPost = ({
   likes,
   dislikes,
   comments,
+  handleOpenPostSettings,
 }) => {
+  const handlePostPress = () => {
+    router.push({
+      pathname: "../screens/PostDetail",
+      params: {
+        id: id,
+        avatar: avatar,
+        username: username,
+        title: title,
+        description: description,
+        likes: likes,
+        dislikes: dislikes,
+        comments: comments,
+      },
+    });
+  };
   return (
-    <TouchableOpacity>
-      <View className="w-full flex-col items-center jusify-start border-b-4 border-gray-300 pb-4 px-4">
-        <View className="flex-row justify-between items-center w-full h-10 mt-2">
+    <TouchableOpacity className="w-full h-fit" onPress={handlePostPress}>
+      <View className="w-full h-fit flex-col items-center jusify-start border-b-4 border-gray-300 pb-2">
+        <View className="flex-row justify-between items-center w-full h-10 mt-2 px-3">
           <View className="w-[90%] flex-row items-center justify-start">
             <Image source={avatar} className="w-9 h-9 rounded-full" />
             <Text className="ml-4 text-[16px] font-semibold">{username}</Text>
           </View>
 
-          <TouchableOpacity className="w-8 h-8 rounded-full flex-row items-center justify-center">
+          <TouchableOpacity
+            className="w-8 h-8 rounded-full flex-row items-center justify-center"
+            onPress={handleOpenPostSettings}
+          >
             <FontAwesomeIcon
               icon={icons.faEllipsis}
               size={20}
@@ -31,7 +52,7 @@ const MyMinimalPost = ({
             />
           </TouchableOpacity>
         </View>
-        <View className="w-full h-10 flex-row justify-start items-center">
+        <View className="w-full h-10 flex-row justify-start items-center px-2">
           <View className="bg-[#fed7aa] rounded-xl w-16 h-5 items-center justify-center">
             <Text className="text-[15px] font-semibold text-orange-400">
               #Title:
@@ -43,19 +64,13 @@ const MyMinimalPost = ({
             </Text>
           </View>
         </View>
-        <View className="w-full h-fit max-h-28">
+        <View className="w-full h-fit max-h-28 px-3">
           <Text className="text-[15px]">{description}</Text>
         </View>
-        <View
-          className="w-full h-fit max-h-40 mt-6 rounded-md"
-          style={{ aspectRatio: 16 / 9 }}
-        >
-          <Image
-            source={uploadedImage}
-            className="w-full h-[100%] rounded-md"
-          />
+        <View className="w-full h-fit mt-3">
+          <DynamicImageGrid images={uploadedImage} />
         </View>
-        <View className="w-full h-12 flex-row justify-center items-center mt-8 px-4 border-t-[1px] border-solid border-gray-300 pt-4">
+        <View className="w-full h-12 flex-row justify-center items-center px-4 border-t-[1px] border-solid border-gray-300 pt-2">
           <View className="flex-row justify-center items-center w-[30%]">
             <Text className="text-[15px] font-semibold text-gray-600 border-solid">
               {likes}

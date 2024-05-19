@@ -4,7 +4,16 @@ import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../constants";
 import { router } from "expo-router";
 
-const ItemCard = ({ id, image, title, rating, price, soldUnits, shop }) => {
+const ItemCard = ({
+  id,
+  image,
+  title,
+  rating,
+  price,
+  soldUnits,
+  shop,
+  isHorizontal,
+}) => {
   const handlePress = () => {
     router.push({
       pathname: "../screens/ProductDetail",
@@ -21,13 +30,15 @@ const ItemCard = ({ id, image, title, rating, price, soldUnits, shop }) => {
   };
   return (
     <TouchableOpacity
-      className="w-44 h-[27vh] rounded-lg flex-col items-center justify-start mb-3 mt-3 bg-white border-[0.5px] border-solid border-gray-200"
+      className={`w-${
+        isHorizontal ? "44" : "full"
+      } h-56 flex-col items-center justify-start mt-3 bg-white rounded-lg border-[0.5px] border-solid border-gray-200`}
       onPress={handlePress}
     >
       <Image source={image} className="w-full h-32 rounded-t-lg" />
       <View className="w-full flex-col items-start justify-center mt-2 px-2">
         <Text className="text-[13px] mb-1">{title}</Text>
-        <View className="flex-row items-center justify-start mb-2">
+        <View className="flex-row items-center justify-start mb-1">
           <FontAwesomeIcon
             icon={icons.faDongSign}
             size={13}

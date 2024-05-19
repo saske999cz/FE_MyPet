@@ -1,13 +1,12 @@
 import {
   View,
   Text,
-  ScrollView,
-  FlatList,
   Image,
   TouchableOpacity,
   RefreshControl,
+  Animated,
 } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomButton from "../../components/CustomButton";
 import { images } from "../../constants";
@@ -20,116 +19,154 @@ import Toast from "react-native-toast-message";
 import { setGlobalState, useGlobalState } from "../../state/GlobalState";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { FlashList } from "@shopify/flash-list";
 
-const market = () => {
-  const [cartLength, setCartLength] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
-  const [activeCategory, setActiveCategory] = useState("none");
-  const addedCartItem = useGlobalState("addedCartItem");
-  const toastStatus = useGlobalState("toastStatus");
-  const cartStatus = useGlobalState("cartStatus");
+const Header_Max_Height = 230;
+const Header_Min_Height = 70;
+const Scroll_Distance = Header_Max_Height - Header_Min_Height;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const storedCartLength = await retrieveData("cartLength");
-      setCartLength(storedCartLength);
-    };
-    fetchData();
-  }, [toastStatus[0], cartStatus[0]]);
+const DynamicHeader = ({ value, activeCategory, handlePressCategory }) => {
+  const animatedHeaderHeight = value.interpolate({
+    inputRange: [0, Scroll_Distance],
+    outputRange: [Header_Max_Height, Header_Min_Height],
+    extrapolate: "clamp",
+  });
 
-  const retrieveData = async (key) => {
-    try {
-      const value = await AsyncStorage.getItem(key);
-      if (value !== null) {
-        const parsedValue = JSON.parse(value);
-        return parsedValue;
-      } else {
-        return 0;
-      }
-    } catch (error) {
-      console.error("Error retrieving data:", error);
-    }
+  const animatedOpacity = value.interpolate({
+    inputRange: [0, Scroll_Distance],
+    outputRange: [1, 0],
+    extrapolate: "clamp",
+  });
+
+  const animatedLogo = {
+    transform: [
+      {
+        scale: value.interpolate({
+          inputRange: [0, Scroll_Distance],
+          outputRange: [1, 0],
+          extrapolate: "clamp",
+        }),
+      },
+    ],
+    opacity: value.interpolate({
+      inputRange: [0, 60],
+      outputRange: [1, 0],
+      extrapolate: "clamp",
+    }),
   };
 
-  useEffect(() => {
-    if (toastStatus[0] === true && addedCartItem[0] !== "") {
-      setTimeout(() => {
-        Toast.show({
-          type: "success",
-          text1: "New cart item!",
-          text2: addedCartItem[0] + " has been added to your cart",
-          visibilityTime: 3000,
-        });
-      }, 100);
-      const newCartLength = retrieveData("cartLength");
-      setCartLength(newCartLength);
-    }
-    setTimeout(() => {
-      setGlobalState("toastStatus", false);
-      setGlobalState("addedCartItem", "");
-    }, 2000);
-  }, [toastStatus[0]]);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    // fetch data
-    setRefreshing(false);
+  const animatedSearchBar = {
+    transform: [
+      {
+        translateX: value.interpolate({
+          inputRange: [0, Scroll_Distance],
+          outputRange: [0, -63],
+          extrapolate: "clamp",
+        }),
+      },
+      {
+        scaleX: value.interpolate({
+          inputRange: [0, Scroll_Distance - 60],
+          outputRange: [1, 0.8],
+          extrapolate: "clamp",
+        }),
+      },
+      {
+        translateY: value.interpolate({
+          inputRange: [0, 50],
+          outputRange: [0, 11],
+          extrapolate: "clamp",
+        }),
+      },
+    ],
+    opacity: value.interpolate({
+      inputRange: [0, 100],
+      outputRange: [1, 0],
+      extrapolate: "clamp",
+    }),
   };
 
-  handlePressCategory = (category) => {
-    setActiveCategory(category);
-  };
-
-  handleCartPress = () => {
-    router.push("../screens/Cart");
+  const animatedSmallSearchBar = {
+    transform: [
+      {
+        translateX: value.interpolate({
+          inputRange: [0, Scroll_Distance],
+          outputRange: [4, 7],
+          extrapolate: "clamp",
+        }),
+      },
+      {
+        translateY: value.interpolate({
+          inputRange: [0, Scroll_Distance],
+          outputRange: [4, 5],
+          extrapolate: "clamp",
+        }),
+      },
+    ],
+    opacity: value.interpolate({
+      inputRange: [0, Scroll_Distance],
+      outputRange: [0, 1],
+      extrapolate: "clamp",
+    }),
   };
 
   return (
-    <SafeAreaView className="h-full flex-col">
-      <View className="flex-col items-center justify-between px-4 mb-4">
-        <View className="flex-row w-full items-center justify-between mb-3">
-          <Image
+    <Animated.View
+      style={{
+        height: animatedHeaderHeight,
+        justifyContent: "center",
+        alignItems: "center",
+        left: 0,
+        right: 0,
+      }}
+    >
+      <View className="w-full h-32 absolute top-0 left-0 right-0"></View>
+      <View className="w-full flex-col items-center justify-between px-4 mb-4">
+        <View className="w-full flex-row items-center justify-start mb-3">
+          <Animated.Image
             source={images.logoBlack}
-            className="w-32 h-16 -ml-4"
+            className="w-32 h-16 -ml-4 -mt-1"
             resizeMode="contain"
+            style={animatedLogo}
           />
-          <View className="flex-row items-center w-[25%] justify-around -mr-1">
-            <TouchableOpacity
-              className="w-10 h-10 bg-[#e5e7eb] rounded-full flex-row items-center justify-center"
-              onPress={handleCartPress}
-            >
-              {cartLength > 0 ? (
-                <View className="w-4 h-4 rounded-full bg-red-500 absolute top-0 right-0 -mr-1 flex-row items-center justify-center ">
-                  <Text className="text-[12px] font-semibold text-white">
-                    {cartLength}
-                  </Text>
-                </View>
-              ) : null}
+        </View>
+        <Animated.View
+          className="w-full flex-row items-center justify-center"
+          style={animatedSearchBar}
+        >
+          <SearchInput
+            title="Search"
+            placeholder="Search"
+            otherStyles={"w-[88%]"}
+          />
+          <Animated.View
+            className="w-10 h-10 rounded-lg ml-2"
+            style={animatedLogo}
+          >
+            <TouchableOpacity className="w-full h-full bg-[#e5e7eb] rounded-lg flex-row items-center justify-center ">
               <FontAwesomeIcon
-                icon={icons.faCartShopping}
+                icon={icons.faFilter}
                 size={20}
                 style={{ color: "#000000" }}
               />
             </TouchableOpacity>
-            <Image source={images.avatar} className="w-9 h-9 rounded-full" />
-          </View>
-        </View>
-        <View className="w-full flex-row items-center justify-center">
+          </Animated.View>
+        </Animated.View>
+        <Animated.View
+          className="w-full flex-row items-center justify-center"
+          style={animatedSmallSearchBar}
+        >
           <SearchInput
             title="Search"
-            placeholder="Search for products"
-            otherStyles={"w-[88%]"}
+            placeholder="Search"
+            otherStyles={"w-[76%] absolute top-0 left-0 -ml-3 -mt-9"}
           />
-          <TouchableOpacity className="w-10 h-10 bg-[#e5e7eb] rounded-lg flex-row items-center justify-center ml-2">
-            <FontAwesomeIcon
-              icon={icons.faFilter}
-              size={20}
-              style={{ color: "#000000" }}
-            />
-          </TouchableOpacity>
-        </View>
+        </Animated.View>
       </View>
-      <View className="w-full flex-col items-start justify-center px-4 mb-3">
+      <Animated.View
+        className="w-full flex-col items-start justify-center px-4 mb-3"
+        style={{ opacity: animatedOpacity }}
+      >
         <Text className="text-[15px] font-semibold mb-4">Categories</Text>
         <View className="flex-row items-center justify-start w-full">
           <TouchableOpacity
@@ -190,30 +227,137 @@ const market = () => {
             <Text className={`text-[13px] ml-2`}>Birds</Text>
           </TouchableOpacity>
         </View>
-      </View>
-      <FlatList
+      </Animated.View>
+    </Animated.View>
+  );
+};
+
+const market = () => {
+  const [cartLength, setCartLength] = useState(null);
+  const [activeCategory, setActiveCategory] = useState("none");
+  const addedCartItem = useGlobalState("addedCartItem");
+  const toastStatus = useGlobalState("toastStatus");
+  const cartStatus = useGlobalState("cartStatus");
+  const [refreshing, setRefreshing] = useState(false);
+  const scrollOffsetY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const storedCartLength = await retrieveData("cartLength");
+      setCartLength(storedCartLength);
+    };
+    fetchData();
+  }, [toastStatus[0], cartStatus[0]]);
+
+  const retrieveData = async (key) => {
+    try {
+      const value = await AsyncStorage.getItem(key);
+      if (value !== null) {
+        const parsedValue = JSON.parse(value);
+        return parsedValue;
+      } else {
+        return 0;
+      }
+    } catch (error) {
+      console.error("Error retrieving data:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (toastStatus[0] === true && addedCartItem[0] !== "") {
+      setTimeout(() => {
+        Toast.show({
+          type: "success",
+          text1: "New cart item!",
+          text2: addedCartItem[0] + " has been added to your cart",
+          visibilityTime: 3000,
+        });
+      }, 100);
+      const newCartLength = retrieveData("cartLength");
+      setCartLength(newCartLength);
+    }
+    setTimeout(() => {
+      setGlobalState("toastStatus", false);
+      setGlobalState("addedCartItem", "");
+    }, 2000);
+  }, [toastStatus[0]]);
+
+  handleCartPress = () => {
+    router.push("../screens/Cart");
+  };
+
+  handlePressCategory = (category) => {
+    setActiveCategory(category);
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // fetch data
+    setRefreshing(false);
+  };
+
+  return (
+    <SafeAreaView className="w-full h-full flex-col">
+      <SafeAreaView className="flex-row items-center w-[25%] justify-around absolute top-0 right-0 z-50 mr-2 mt-3">
+        <TouchableOpacity
+          className="w-10 h-10 bg-[#e5e7eb] rounded-full flex-row items-center justify-center -mr-2"
+          onPress={handleCartPress}
+        >
+          {cartLength > 0 ? (
+            <View className="w-4 h-4 rounded-full bg-red-500 absolute top-0 right-0 -mr-1 flex-row items-center justify-center ">
+              <Text className="text-[12px] font-semibold text-white">
+                {cartLength}
+              </Text>
+            </View>
+          ) : null}
+          <FontAwesomeIcon
+            icon={icons.faCartShopping}
+            size={20}
+            style={{ color: "#000000" }}
+          />
+        </TouchableOpacity>
+        <Image source={images.avatar} className="w-9 h-9 rounded-full" />
+      </SafeAreaView>
+      <DynamicHeader
+        value={scrollOffsetY}
+        activeCategory={activeCategory}
+        handlePressCategory={handlePressCategory}
+      />
+      <FlashList
+        scrollEventThrottle={5}
         data={ItemDummy}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <ItemCard
-            id={item.id}
-            title={item.title}
-            price={item.price}
-            image={item.image}
-            rating={item.rating}
-            soldUnits={item.soldUnits}
-            shop={item.shop}
-          />
+          <View className="w-[96%] h-fit ml-1">
+            <ItemCard
+              id={item.id}
+              title={item.title}
+              price={item.price}
+              image={item.image}
+              rating={item.rating}
+              soldUnits={item.soldUnits}
+              shop={item.shop}
+              isHorizontal={false}
+            />
+          </View>
         )}
         numColumns={2}
         columnWrapperStyle={{
           justifyContent: "space-around",
         }}
-        style={{ flex: 1 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        estimatedItemSize={50}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollOffsetY } } }],
+          {
+            useNativeDriver: false,
+          }
+        )}
       />
+
       <View style={{ position: "absolute", top: 20, left: 20, right: 20 }}>
         <Toast />
       </View>

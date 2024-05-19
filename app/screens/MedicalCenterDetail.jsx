@@ -12,8 +12,10 @@ import { images } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
 import { router, useLocalSearchParams } from "expo-router";
-import { PetImages, ClinicDummy } from "../../dummy/FakeData";
+import { PetImages, ClinicDummy, DoctorDummy } from "../../dummy/FakeData";
 import MedicalCenterCard from "../../components/MedicalCenterCard";
+import DoctorCard from "../../components/DoctorCard";
+import { FlashList } from "@shopify/flash-list";
 
 const MedicalCenterDetail = () => {
   const {
@@ -24,33 +26,46 @@ const MedicalCenterDetail = () => {
     medicalCenterTelephone,
     medicalCenterImage,
   } = useLocalSearchParams();
-
   const [mainImage, setMainImage] = useState(PetImages[0]);
   const [currentImageIndex, setCurrentImageIndex] = useState(1);
   const totalImages = PetImages.length;
+
   const handleBack = () => {
     router.back();
   };
+
   const handleProductImagePress = (image) => {
     setMainImage(image);
     setCurrentImageIndex(PetImages.indexOf(image) + 1);
   };
+
+  const handleCreateAppointment = () => {
+    router.push({
+      pathname: "../screens/CreateAppointment",
+      params: {
+        medicalCenterName: medicalCenterName,
+        medicalCenterTelephone: medicalCenterTelephone,
+        medicalCenterWorkingHours: medicalCenterWorkingHours,
+      },
+    });
+  };
+
   return (
     <SafeAreaView className="h-full">
+      <View className="w-full h-12 flex-row items-center justify-center">
+        <TouchableOpacity
+          className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
+          onPress={handleBack}
+        >
+          <FontAwesomeIcon
+            icon={icons.faArrowLeftLong}
+            size={20}
+            style={{ color: "#f59e0b" }}
+          />
+        </TouchableOpacity>
+      </View>
       <ScrollView>
         <View className="flex-col items-center justify-start">
-          <View className="w-full h-12 flex-row items-center justify-center">
-            <TouchableOpacity
-              className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
-              onPress={handleBack}
-            >
-              <FontAwesomeIcon
-                icon={icons.faArrowLeftLong}
-                size={20}
-                style={{ color: "#f59e0b" }}
-              />
-            </TouchableOpacity>
-          </View>
           <Image
             source={medicalCenterImage}
             className="w-full h-60"
@@ -141,7 +156,10 @@ const MedicalCenterDetail = () => {
               </View>
             </View>
             <View className="w-[30%] h-full flex-row items-center justify-end">
-              <TouchableOpacity className="w-36 h-8 bg-[#f59e0b] rounded-md flex-row items-center justify-center mr-4">
+              <TouchableOpacity
+                className="w-36 h-8 bg-[#f59e0b] rounded-md flex-row items-center justify-center mr-4"
+                onPress={handleCreateAppointment}
+              >
                 <FontAwesomeIcon
                   icon={icons.faCalendarPlus}
                   size={13}
@@ -164,35 +182,30 @@ const MedicalCenterDetail = () => {
           </View>
           <View className="w-full h-[4px] bg-gray-300 mt-5"></View>
           <View className="w-full px-4 mt-4">
-            <View className="w-full flex-row items-center justify-start">
-              <View className="w-10 h-10 rounded-full border-[0.5px] border-solid border-gray-200">
-                <Image
-                  source={images.clinic1}
-                  className="w-full h-full rounded-full"
+            <View className="w-full flex-col items-start justify-start">
+              <Text className="text-[14px] font-semibold">Doctors</Text>
+              <View className="w-full flex-row items-start justify-start">
+                <FlashList
+                  data={DoctorDummy}
+                  keyExtractor={(item) => item.id}
+                  renderItem={({ item }) => (
+                    <View className="ml-2">
+                      <DoctorCard
+                        name={item.name}
+                        image={item.image}
+                        gender={item.gender}
+                        speciality={item.speciality}
+                        experience={item.experience}
+                        age={item.age}
+                        id={item.id}
+                        rating={item.rating}
+                      />
+                    </View>
+                  )}
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={false}
+                  estimatedItemSize={20}
                 />
-              </View>
-
-              <View className="w-fit flex-col items-start justify-start ml-2">
-                <View className="flex-row items-center justify-start">
-                  <FontAwesomeIcon
-                    icon={icons.faHospital}
-                    size={12}
-                    style={{ color: "#0ea5e9" }}
-                  />
-                  <Text className="ml-4 text-[14px] ml-1 mr-1">
-                    Puppy Shelter
-                  </Text>
-                </View>
-                <View className="flex-row items-center-justify-start mt-1">
-                  <FontAwesomeIcon
-                    icon={icons.faLocationDot}
-                    size={10}
-                    style={{ color: "#ef4444" }}
-                  />
-                  <Text className="ml-4 text-[10px] ml-1 mr-1">
-                    Tokyo,Japan
-                  </Text>
-                </View>
               </View>
             </View>
           </View>
@@ -207,11 +220,11 @@ const MedicalCenterDetail = () => {
               </TouchableOpacity>
             </View>
 
-            <FlatList
+            <FlashList
               data={ClinicDummy}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <View className="ml-2">
+                <View className="ml-1">
                   <MedicalCenterCard
                     name={item.name}
                     image={item.image}
@@ -219,11 +232,13 @@ const MedicalCenterDetail = () => {
                     distance={item.distance}
                     workingHours={item.workingHours}
                     telephone={item.telephone}
+                    isHorizontal={true}
                   />
                 </View>
               )}
               horizontal={true}
               showsHorizontalScrollIndicator={false}
+              estimatedItemSize={20}
             />
           </View>
         </View>

@@ -1,11 +1,4 @@
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  FlatList,
-  ScrollView,
-} from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "../../constants";
@@ -14,6 +7,7 @@ import { icons } from "../../constants";
 import { router, useLocalSearchParams } from "expo-router";
 import { PetImages, PetDummy } from "../../dummy/FakeData";
 import AdoptPetCard from "../../components/AdoptPetCard";
+import { FlashList } from "@shopify/flash-list";
 
 const AdoptPetDetail = () => {
   const { petName, petAge, petImage, petGender } = useLocalSearchParams();
@@ -56,7 +50,7 @@ const AdoptPetDetail = () => {
             </Text>
           </View>
           <View className="w-full h-fit flex-row items-center justify-start px-3">
-            <FlatList
+            <FlashList
               data={PetImages}
               keyExtractor={(item) => item}
               renderItem={({ item }) => (
@@ -73,6 +67,7 @@ const AdoptPetDetail = () => {
               horizontal={true}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ padding: 4 }}
+              estimatedItemSize={20}
             />
           </View>
           <View className="w-full h-32 flex-row items-center justify-between">
@@ -169,7 +164,7 @@ const AdoptPetDetail = () => {
               </TouchableOpacity>
             </View>
 
-            <FlatList
+            <FlashList
               data={PetDummy}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
@@ -179,11 +174,13 @@ const AdoptPetDetail = () => {
                     image={item.image}
                     age={item.age}
                     gender={item.gender}
+                    isHorizontal={true}
                   />
                 </View>
               )}
               horizontal={true}
               showsHorizontalScrollIndicator={false}
+              estimatedItemSize={20}
             />
           </View>
         </View>

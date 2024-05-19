@@ -8,6 +8,7 @@ const SearchInput = ({
   value,
   placeholder,
   handleChangeText,
+  handleSearch,
   otherStyles,
   ...props
 }) => {
@@ -23,8 +24,12 @@ const SearchInput = ({
         className="flex-1 text-black"
         placeholderTextColor="#64748b"
         secureTextEntry={title === "Password" && !showPassword}
+        autoCapitalize="none"
       />
-      <TouchableOpacity className="w-12 h-10 rounded-lg flex-row items-center justify-center -mr-4">
+      <TouchableOpacity
+        className="w-12 h-10 rounded-lg flex-row items-center justify-center -mr-4"
+        onPress={handleSearch}
+      >
         <FontAwesomeIcon
           icon={icons.faMagnifyingGlass}
           size={20}

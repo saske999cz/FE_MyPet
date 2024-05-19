@@ -42,6 +42,14 @@ import { faCalendarPlus } from "@fortawesome/free-solid-svg-icons";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { faMinus } from "@fortawesome/free-solid-svg-icons";
 import { faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { faChevronUp } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRightLong } from "@fortawesome/free-solid-svg-icons";
+import { faCircleCheck } from "@fortawesome/free-solid-svg-icons";
+import { faStethoscope } from "@fortawesome/free-solid-svg-icons";
+import { faSuitcaseMedical } from "@fortawesome/free-solid-svg-icons";
+import { faArrowUpFromBracket } from "@fortawesome/free-solid-svg-icons";
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 
 export default {
   play,
@@ -88,4 +96,12 @@ export default {
   faPlus,
   faMinus,
   faTrashCan,
+  faChevronDown,
+  faChevronUp,
+  faArrowRightLong,
+  faCircleCheck,
+  faStethoscope,
+  faSuitcaseMedical,
+  faArrowUpFromBracket,
+  faXmark,
 };

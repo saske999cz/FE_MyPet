@@ -5,7 +5,7 @@ import { icons } from "../constants";
 
 const MyPetCard = ({ image, name }) => {
   return (
-    <TouchableOpacity className="w-24 h-32 flex-col items-center justify-start mb-2 mt-2 bg-white rounded-lg">
+    <TouchableOpacity className="w-28 h-36 flex-col items-center justify-start m-2 bg-white rounded-lg">
       <View style={{ width: "100%", aspectRatio: 1 }}>
         <Image
           source={image}
@@ -14,7 +14,7 @@ const MyPetCard = ({ image, name }) => {
         />
       </View>
       <View className="w-full flex-col items-start justify-center mt-2 px-2">
-        <Text className="text-[15px] font-semibold mb-2">{name}</Text>
+        <Text className="text-[14px] font-semibold mb-2">{name}</Text>
       </View>
     </TouchableOpacity>
   );
