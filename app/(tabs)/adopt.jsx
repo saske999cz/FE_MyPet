@@ -2,7 +2,6 @@ import {
   View,
   Text,
   ScrollView,
-  FlatList,
   Image,
   TouchableOpacity,
   RefreshControl,
@@ -17,9 +16,222 @@ import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import AdoptPetCard from "../../components/AdoptPetCard";
 import SearchInput from "../../components/SearchInput";
 import { PetDummy } from "../../dummy/FakeData";
+import { FlashList } from "@shopify/flash-list";
+
+const Header_Max_Height = 230;
+const Header_Min_Height = 70;
+const Scroll_Distance = Header_Max_Height - Header_Min_Height;
+
+const DynamicHeader = ({ value, activeCategory, handlePressCategory }) => {
+  const animatedHeaderHeight = value.interpolate({
+    inputRange: [0, Scroll_Distance],
+    outputRange: [Header_Max_Height, Header_Min_Height],
+    extrapolate: "clamp",
+  });
+
+  const animatedOpacity = value.interpolate({
+    inputRange: [0, Scroll_Distance],
+    outputRange: [1, 0],
+    extrapolate: "clamp",
+  });
+
+  const animatedLogo = {
+    transform: [
+      {
+        scale: value.interpolate({
+          inputRange: [0, Scroll_Distance],
+          outputRange: [1, 0],
+          extrapolate: "clamp",
+        }),
+      },
+    ],
+    opacity: value.interpolate({
+      inputRange: [0, 60],
+      outputRange: [1, 0],
+      extrapolate: "clamp",
+    }),
+  };
+
+  const animatedSearchBar = {
+    transform: [
+      {
+        translateX: value.interpolate({
+          inputRange: [0, Scroll_Distance],
+          outputRange: [0, -100],
+          extrapolate: "clamp",
+        }),
+      },
+      {
+        scaleX: value.interpolate({
+          inputRange: [0, Scroll_Distance - 60],
+          outputRange: [1, 0.6],
+          extrapolate: "clamp",
+        }),
+      },
+      {
+        translateY: value.interpolate({
+          inputRange: [0, 50],
+          outputRange: [4, 11],
+          extrapolate: "clamp",
+        }),
+      },
+    ],
+    opacity: value.interpolate({
+      inputRange: [0, 100],
+      outputRange: [1, 0],
+      extrapolate: "clamp",
+    }),
+  };
+  const animatedSmallSearchBar = {
+    transform: [
+      {
+        translateX: value.interpolate({
+          inputRange: [0, Scroll_Distance],
+          outputRange: [4, 7],
+          extrapolate: "clamp",
+        }),
+      },
+      {
+        translateY: value.interpolate({
+          inputRange: [0, Scroll_Distance],
+          outputRange: [3, 8],
+          extrapolate: "clamp",
+        }),
+      },
+    ],
+    opacity: value.interpolate({
+      inputRange: [0, Scroll_Distance],
+      outputRange: [0, 1],
+      extrapolate: "clamp",
+    }),
+  };
+
+  return (
+    <Animated.View
+      style={{
+        height: animatedHeaderHeight,
+        justifyContent: "center",
+        alignItems: "center",
+        left: 0,
+        right: 0,
+      }}
+    >
+      <View className="w-full h-32 absolute top-0 left-0 right-0"></View>
+      <View className="w-full flex-col items-center justify-between px-4 mb-4">
+        <View className="w-full flex-row items-center justify-start mb-3">
+          <Animated.Image
+            source={images.logoBlack}
+            className="w-32 h-16 -ml-4 -mt-1"
+            resizeMode="contain"
+            style={animatedLogo}
+          />
+        </View>
+        <Animated.View
+          className="w-full flex-row items-center justify-center -mt-1"
+          style={animatedSearchBar}
+        >
+          <SearchInput
+            title="Search"
+            placeholder="Search"
+            otherStyles={"w-[88%]"}
+          />
+          <Animated.View
+            className="w-10 h-10 rounded-lg ml-2"
+            style={animatedLogo}
+          >
+            <TouchableOpacity className="w-full h-full bg-[#e5e7eb] rounded-lg flex-row items-center justify-center ">
+              <FontAwesomeIcon
+                icon={icons.faFilter}
+                size={20}
+                style={{ color: "#000000" }}
+              />
+            </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
+        <Animated.View
+          className="w-full flex-row items-center justify-center"
+          style={animatedSmallSearchBar}
+        >
+          <SearchInput
+            title="Search"
+            placeholder="Search"
+            otherStyles={"w-[62%] absolute top-0 left-0 -ml-4 -mt-9"}
+          />
+        </Animated.View>
+      </View>
+      <Animated.View
+        className="w-full flex-col items-start justify-center px-4 mb-3"
+        style={{ opacity: animatedOpacity }}
+      >
+        <Text className="text-[15px] font-semibold mb-4">Categories</Text>
+        <View className="flex-row items-center justify-start w-full">
+          <TouchableOpacity
+            className={`w-24 h-10 rounded-full flex-row items-center justify-center ${
+              activeCategory === "dogs" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
+            }`}
+            onPress={() => handlePressCategory("dogs")}
+          >
+            <View
+              className={`w-9 h-9 rounded-full flex-row items-center justify-center -ml-2 ${
+                activeCategory === "dogs" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
+              }`}
+            >
+              <Image
+                source={images.dog}
+                className="w-5 h-5"
+                resizeMode="contain"
+              />
+            </View>
+            <Text className={`text-[13px] ml-2`}>Dogs</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className={`w-24 h-10 rounded-full flex-row items-center justify-center ml-9 ${
+              activeCategory === "cats" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
+            }`}
+            onPress={() => handlePressCategory("cats")}
+          >
+            <View
+              className={`w-9 h-9 rounded-full flex-row items-center justify-center -ml-2 ${
+                activeCategory === "cats" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
+              }`}
+            >
+              <Image
+                source={images.cat}
+                className="w-5 h-5"
+                resizeMode="contain"
+              />
+            </View>
+            <Text className={`text-[13px] ml-2`}>Cats</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className={`w-24 h-10 rounded-full flex-row items-center justify-center ml-9 ${
+              activeCategory === "birds" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
+            }`}
+            onPress={() => handlePressCategory("birds")}
+          >
+            <View
+              className={`w-9 h-9 rounded-full flex-row items-center justify-center -ml-2 ${
+                activeCategory === "birds" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
+              }`}
+            >
+              <Image
+                source={images.bird}
+                className="w-5 h-5"
+                resizeMode="contain"
+              />
+            </View>
+            <Text className={`text-[13px] ml-2`}>Birds</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </Animated.View>
+  );
+};
+
 const adopt = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState("none");
+  const scrollOffsetY = useRef(new Animated.Value(0)).current;
   const onRefresh = async () => {
     setRefreshing(true);
     // fetch data
@@ -30,105 +242,25 @@ const adopt = () => {
   };
   return (
     <SafeAreaView className="h-full flex-col">
-      <View className="flex-col items-center justify-between px-4 mb-4">
-        <View className="flex-row w-full items-center justify-between mb-3">
-          <Image
-            source={images.logoBlack}
-            className="w-32 h-16 -ml-4"
-            resizeMode="contain"
+      <SafeAreaView className="flex-row items-center w-[25%] justify-around absolute top-0 right-0 z-50 mr-10 mt-3">
+        <View className="w-28 h-10 flex-row items-center justify-center mr-12">
+          <Text className="text-[12px] font-semibold mr-1 mt-1">
+            Da Nang, VN
+          </Text>
+          <FontAwesomeIcon
+            icon={icons.faLocationDot}
+            size={20}
+            style={{ color: "#ef4444" }}
           />
-          <View className="flex-row items-center w-[45%] justify-end">
-            <View className="w-[60%] flex-row items-center justify-center mr-1">
-              <Text className="text-[12px] font-semibold mr-1 mt-1">
-                Da Nang, VN
-              </Text>
-              <FontAwesomeIcon
-                icon={icons.faLocationDot}
-                size={18}
-                style={{ color: "#ef4444" }}
-              />
-            </View>
-            <Image source={images.avatar} className="w-9 h-9 rounded-full" />
-          </View>
         </View>
-        <View className="w-full flex-row items-center justify-center">
-          <SearchInput
-            title="Search"
-            placeholder="Search for pets"
-            otherStyles={"w-[88%]"}
-          />
-          <TouchableOpacity className="w-10 h-10 bg-[#e5e7eb] rounded-lg flex-row items-center justify-center ml-2">
-            <FontAwesomeIcon
-              icon={icons.faFilter}
-              size={20}
-              style={{ color: "#000000" }}
-            />
-          </TouchableOpacity>
-        </View>
-        <View className="w-full flex-col items-start justify-center mt-4">
-          <Text className="text-[15px] font-semibold mb-4">Categories</Text>
-          <View className="flex-row items-center justify-start w-full">
-            <TouchableOpacity
-              className={`w-24 h-10 rounded-full flex-row items-center justify-center ${
-                activeCategory === "dogs" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
-              }`}
-              onPress={() => handlePressCategory("dogs")}
-            >
-              <View
-                className={`w-9 h-9 rounded-full flex-row items-center justify-center -ml-2 ${
-                  activeCategory === "dogs" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
-                }`}
-              >
-                <Image
-                  source={images.dog}
-                  className="w-5 h-5"
-                  resizeMode="contain"
-                />
-              </View>
-              <Text className={`text-[13px] ml-2`}>Dogs</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`w-24 h-10 rounded-full flex-row items-center justify-center ml-9 ${
-                activeCategory === "cats" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
-              }`}
-              onPress={() => handlePressCategory("cats")}
-            >
-              <View
-                className={`w-9 h-9 rounded-full flex-row items-center justify-center -ml-2 ${
-                  activeCategory === "cats" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
-                }`}
-              >
-                <Image
-                  source={images.cat}
-                  className="w-5 h-5"
-                  resizeMode="contain"
-                />
-              </View>
-              <Text className={`text-[13px] ml-2`}>Cats</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`w-24 h-10 rounded-full flex-row items-center justify-center ml-9 ${
-                activeCategory === "birds" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
-              }`}
-              onPress={() => handlePressCategory("birds")}
-            >
-              <View
-                className={`w-9 h-9 rounded-full flex-row items-center justify-center -ml-2 ${
-                  activeCategory === "birds" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
-                }`}
-              >
-                <Image
-                  source={images.bird}
-                  className="w-5 h-5"
-                  resizeMode="contain"
-                />
-              </View>
-              <Text className={`text-[13px] ml-2`}>Birds</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-      <FlatList
+        <Image source={images.avatar} className="w-9 h-9 rounded-full" />
+      </SafeAreaView>
+      <DynamicHeader
+        value={scrollOffsetY}
+        activeCategory={activeCategory}
+        handlePressCategory={handlePressCategory}
+      />
+      <FlashList
         data={PetDummy}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
@@ -137,16 +269,24 @@ const adopt = () => {
             name={item.name}
             gender={item.gender}
             age={item.age}
+            isHorizontal={false}
           />
         )}
         numColumns={2}
         columnWrapperStyle={{
           justifyContent: "space-around",
         }}
-        style={{ flex: 1 }}
+        estimatedItemSize={20}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollOffsetY } } }],
+          {
+            useNativeDriver: false,
+          }
+        )}
+        showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
   );

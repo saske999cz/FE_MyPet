@@ -12,6 +12,14 @@ import husky from "../assets/images/husky.jpg";
 import goldenretriever from "../assets/images/goldenretriever.jpg";
 import avatar1 from "../assets/images/avatar1.jpg";
 import avatar2 from "../assets/images/avatar2.jpg";
+import avatar3 from "../assets/images/avatar3.jpeg";
+import avatar4 from "../assets/images/avatar4.jpeg";
+import avatar5 from "../assets/images/avatar5.jpg";
+import avatar6 from "../assets/images/avatar6.png";
+import avatar7 from "../assets/images/avatar7.jpg";
+import avatar8 from "../assets/images/avatar8.png";
+import avatar9 from "../assets/images/avatar9.jpg";
+import avatar10 from "../assets/images/avatar10.jpg";
 import pomeranian from "../assets/images/pomeranian.jpeg";
 import dogleash from "../assets/images/dogleash.jpg";
 import dogbowl from "../assets/images/dogbowl.jpg";
@@ -47,6 +55,16 @@ import husky1 from "../assets/images/husky1.jpg";
 import husky2 from "../assets/images/husky2.jpg";
 import husky3 from "../assets/images/husky3.png";
 import husky4 from "../assets/images/husky4.jpg";
+import doctor1 from "../assets/images/doctor1.jpg";
+import doctor2 from "../assets/images/doctor2.jpg";
+import doctor3 from "../assets/images/doctor3.jpg";
+import doctor4 from "../assets/images/doctor4.jpg";
+import doctor5 from "../assets/images/doctor5.jpg";
+import momo from "../assets/images/momo.png";
+import vnpay from "../assets/images/vnpay.png";
+import paypal from "../assets/images/paypal.png";
+import nodata from "../assets/images/nodatafound.png";
+import logout from "../assets/images/logout.png";
 
 export default {
   profile,
@@ -98,4 +116,22 @@ export default {
   husky2,
   husky3,
   husky4,
+  doctor1,
+  doctor2,
+  doctor3,
+  doctor4,
+  doctor5,
+  avatar3,
+  avatar4,
+  avatar5,
+  avatar6,
+  avatar7,
+  avatar8,
+  avatar9,
+  avatar10,
+  momo,
+  vnpay,
+  paypal,
+  nodata,
+  logout,
 };

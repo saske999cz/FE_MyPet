@@ -26,6 +26,7 @@ const Cart = () => {
   const cartStatus = useGlobalState("cartStatus");
   const toastStatus = useGlobalState("toastStatus");
   const removedCartItem = useGlobalState("removedCartItem");
+
   const onRefresh = async () => {
     setRefreshing(true);
     // fetch data
@@ -66,6 +67,10 @@ const Cart = () => {
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handleCheckout = () => {
+    router.push("../screens/CheckOut");
   };
   return (
     <SafeAreaView className="h-full w-full">
@@ -118,7 +123,10 @@ const Cart = () => {
               }, 0)}
             </Text>
           </View>
-          <TouchableOpacity className="w-[40%] h-full bg-[#f59e0b] flex-row items-center justify-center">
+          <TouchableOpacity
+            className="w-[40%] h-full bg-[#f59e0b] flex-row items-center justify-center"
+            onPress={handleCheckout}
+          >
             <Text className="text-[15px] font-semibold text-white">
               Checkout
             </Text>

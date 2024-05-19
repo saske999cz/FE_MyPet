@@ -16,6 +16,7 @@ import { ProductImages, ItemDummy } from "../../dummy/FakeData";
 import ItemCard from "../../components/ItemCard";
 import { setGlobalState } from "../../state/GlobalState";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FlashList } from "@shopify/flash-list";
 
 const ProductDetail = () => {
   const { id, title, rating, price, soldUnits, shop, image } =
@@ -84,22 +85,31 @@ const ProductDetail = () => {
     });
     router.back();
   };
+
+  const handleShopPress = () => {
+    router.push({
+      pathname: "../screens/Shop",
+      params: {
+        shop: shop,
+      },
+    });
+  };
   return (
     <SafeAreaView className="h-full">
+      <View className="w-full h-12 flex-row items-center justify-center">
+        <TouchableOpacity
+          className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
+          onPress={handleBack}
+        >
+          <FontAwesomeIcon
+            icon={icons.faArrowLeftLong}
+            size={20}
+            style={{ color: "#f59e0b" }}
+          />
+        </TouchableOpacity>
+      </View>
       <ScrollView>
         <View className="flex-col items-center justify-start">
-          <View className="w-full h-12 flex-row items-center justify-center">
-            <TouchableOpacity
-              className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
-              onPress={handleBack}
-            >
-              <FontAwesomeIcon
-                icon={icons.faArrowLeftLong}
-                size={20}
-                style={{ color: "#f59e0b" }}
-              />
-            </TouchableOpacity>
-          </View>
           <Image
             source={mainImage}
             className="w-full h-60"
@@ -112,7 +122,7 @@ const ProductDetail = () => {
             </Text>
           </View>
           <View className="w-full h-fit flex-row items-center justify-start px-3">
-            <FlatList
+            <FlashList
               data={ProductImages}
               keyExtractor={(item) => item}
               renderItem={({ item }) => (
@@ -129,6 +139,7 @@ const ProductDetail = () => {
               horizontal={true}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ padding: 4 }}
+              estimatedItemSize={20}
             />
           </View>
 
@@ -189,7 +200,10 @@ const ProductDetail = () => {
           </View>
           <View className="w-full h-[4px] bg-gray-300 mt-5"></View>
           <View className="w-full px-4 mt-4">
-            <View className="w-full flex-row items-center justify-start">
+            <TouchableOpacity
+              className="w-full flex-row items-center justify-start"
+              onPress={handleShopPress}
+            >
               <View className="w-10 h-10 rounded-full border-[0.5px] border-solid border-gray-200">
                 <Image
                   source={images.clinic1}
@@ -217,7 +231,7 @@ const ProductDetail = () => {
                   </Text>
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
           <View className="w-full h-[4px] bg-gray-300 mt-5"></View>
           <View className="w-full px-4 h-fit">
@@ -230,11 +244,11 @@ const ProductDetail = () => {
               </TouchableOpacity>
             </View>
 
-            <FlatList
+            <FlashList
               data={ItemDummy}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <View className="ml-2">
+                <View className="ml-1">
                   <ItemCard
                     title={item.title}
                     price={item.price}
@@ -242,11 +256,13 @@ const ProductDetail = () => {
                     rating={item.rating}
                     soldUnits={item.soldUnits}
                     shop={item.shop}
+                    isHorizontal={true}
                   />
                 </View>
               )}
               horizontal={true}
               showsHorizontalScrollIndicator={false}
+              estimatedItemSize={20}
             />
           </View>
         </View>

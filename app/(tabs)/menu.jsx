@@ -5,10 +5,18 @@ import { images } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const menu = () => {
   const handlePressMyProfile = () => {
     router.push("../screens/MyProfile");
+  };
+  const handleLogOut = () => {
+    AsyncStorage.removeItem("token");
+    router.replace("/sign-in");
+  };
+  const handlePressMyPet = () => {
+    router.push("../screens/MyPet");
   };
   return (
     <SafeAreaView className="h-full flex-col items-center justify-start">
@@ -33,11 +41,14 @@ const menu = () => {
           <Text className="text-[14px] font-semibold">My Profile</Text>
         </TouchableOpacity>
         <View className="w-full h-[1px] bg-gray-200"></View>
-        <TouchableOpacity className="w-full h-16 flex-row items-center justify-start px-4 py-2">
+        <TouchableOpacity
+          className="w-full h-16 flex-row items-center justify-start px-4 py-2"
+          onPress={handlePressMyPet}
+        >
           <View className="w-16 h-16 flex-row items-center justify-center">
             <Image source={images.peticon} className="w-7 h-7" />
           </View>
-          <Text className="text-[14px] font-semibold">My Pet</Text>
+          <Text className="text-[14px] font-semibold">My Pets</Text>
         </TouchableOpacity>
         <View className="w-full h-[1px] bg-gray-200"></View>
         <TouchableOpacity className="w-full h-16 flex-row items-center justify-start px-4 py-2">
@@ -52,6 +63,16 @@ const menu = () => {
             <Image source={images.lock} className="w-7 h-7" />
           </View>
           <Text className="text-[14px] font-semibold">Security</Text>
+        </TouchableOpacity>
+        <View className="w-full h-[1px] bg-gray-200"></View>
+        <TouchableOpacity
+          className="w-full h-16 flex-row items-center justify-start px-4 py-2"
+          onPress={handleLogOut}
+        >
+          <View className="w-16 h-16 flex-row items-center justify-center">
+            <Image source={images.logout} className="w-7 h-7" />
+          </View>
+          <Text className="text-[14px] font-semibold">Log out</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

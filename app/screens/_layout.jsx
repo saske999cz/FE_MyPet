@@ -60,6 +60,48 @@ const ScreensLayout = () => {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="Shop"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="DoctorDetail"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="CheckOut"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="Search"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="EditPost"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="MyPetDetail"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="UserSearchResult"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
     </>
   );
