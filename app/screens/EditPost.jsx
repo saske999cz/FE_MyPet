@@ -61,7 +61,7 @@ const EditPost = () => {
           className="w-12 h-12 flex-row items-center justify-center absolute top-0 right-0 mr-3"
           onPress={handleEditPost}
         >
-          <Text className="font-semibold text-[15px] text-blue-500">Done</Text>
+          <Text className="font-semibold text-[15px] text-amber-500">Done</Text>
         </TouchableOpacity>
       </View>
       <FlashList
@@ -103,7 +103,7 @@ const EditPost = () => {
               }
             />
             <View className="w-full h-16 flex-row items-center justify-center mt-3">
-              <TouchableOpacity className="w-32 h-10 rounded-lg flex-row items-center justify-center bg-blue-500">
+              <TouchableOpacity className="w-32 h-10 rounded-lg flex-row items-center justify-center bg-amber-500">
                 <FontAwesomeIcon
                   icon={icons.faArrowUpFromBracket}
                   size={17}

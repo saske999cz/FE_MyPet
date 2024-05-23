@@ -19,8 +19,10 @@ import {
 import FormField from "../../components/FormField";
 import * as ImagePicker from "expo-image-picker";
 import DynamicImageGrid from "../../components/DynamicImageGrid";
+import { SwipeablePetRow } from "../../components/SwipeablePetRow";
 
 const MyPet = () => {
+  const [PetData, setPetData] = useState(PetDummy);
   const bottomSheetModalRef = useRef(null);
   const snapPoints = ["90%"];
   const [imageList, setImageList] = useState([]);
@@ -57,6 +59,12 @@ const MyPet = () => {
       setImageList(result.assets.map((asset) => asset.uri));
     }
   };
+
+  const handleDeleteRow = (id) => {
+    const newData = PetData.filter((item) => item.id !== id);
+    setPetData(newData);
+  };
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
@@ -72,7 +80,7 @@ const MyPet = () => {
                 style={{ color: "#f59e0b" }}
               />
             </TouchableOpacity>
-            <Text className="font-bold text-[16px]">My Pet</Text>
+            <Text className="font-bold text-[16px]">My Pets</Text>
             <TouchableOpacity
               className="w-12 h-12 flex-row items-center justify-center absolute top-0 right-0 mr-3"
               onPress={openBottomSheet}
@@ -85,39 +93,13 @@ const MyPet = () => {
             </TouchableOpacity>
           </View>
           <FlashList
-            data={PetDummy}
+            data={PetData}
             renderItem={({ item }) => (
-              <TouchableOpacity className="w-full h-12 flex-row items-center justify-start px-3 mt-3 mb-3">
-                <View className="w-12 h-12 rounded-full border-[0.5px] border-solid border-gray-400">
-                  <Image
-                    source={item.image}
-                    className="w-full h-full rounded-full"
-                  />
-                </View>
-                <View className="w-[80%] h-fit flex-col items-start justify-start ml-2">
-                  <View className="w-full h-fit flex-row items-center justify-start">
-                    <Text className="text-[15px] font-semibold">
-                      {item.name}
-                    </Text>
-                  </View>
-                  <View className="w-full h-fit flex-row items-center justify-start">
-                    <Text className="text-[13px] mr-1">{item.gender}</Text>
-                    {item.gender === "Male" ? (
-                      <FontAwesomeIcon
-                        icon={icons.faMars}
-                        size={13}
-                        style={{ color: "#3b82f6" }}
-                      />
-                    ) : (
-                      <FontAwesomeIcon
-                        icon={icons.faVenus}
-                        size={13}
-                        style={{ color: "#f43f5e" }}
-                      />
-                    )}
-                  </View>
-                </View>
-              </TouchableOpacity>
+              <SwipeablePetRow
+                key={item.id}
+                onDelete={() => handleDeleteRow(item.id)}
+                item={item}
+              />
             )}
             keyExtractor={(item) => item.id}
             estimatedItemSize={20}
@@ -136,7 +118,7 @@ const MyPet = () => {
               <View className="w-full h-12 flex-row items-center justify-center ">
                 <Text className="font-semibold text-[15px]">My New Pet</Text>
                 <TouchableOpacity className="w-12 h-12 absolute right-0 top-0 bottom-0 mt-4">
-                  <Text className="font-semibold text-blue-500 text-[15px]">
+                  <Text className="font-semibold text-amber-500 text-[15px]">
                     Add
                   </Text>
                 </TouchableOpacity>
@@ -172,7 +154,7 @@ const MyPet = () => {
                   />
                   <View className="w-full h-fit px-4 flex-col items-center justify-center mt-6">
                     <TouchableOpacity
-                      className="w-32 h-10 rounded-lg flex-row items-center justify-center bg-blue-500 mb-4"
+                      className="w-32 h-10 rounded-lg flex-row items-center justify-center bg-amber-500 mb-4"
                       onPress={pickImage}
                     >
                       <FontAwesomeIcon

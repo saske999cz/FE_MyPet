@@ -50,6 +50,8 @@ import { faStethoscope } from "@fortawesome/free-solid-svg-icons";
 import { faSuitcaseMedical } from "@fortawesome/free-solid-svg-icons";
 import { faArrowUpFromBracket } from "@fortawesome/free-solid-svg-icons";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faCalendarDays } from "@fortawesome/free-solid-svg-icons";
+import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
 export default {
   play,
@@ -104,4 +106,6 @@ export default {
   faSuitcaseMedical,
   faArrowUpFromBracket,
   faXmark,
+  faCalendarDays,
+  faChevronRight,
 };

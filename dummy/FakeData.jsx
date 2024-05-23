@@ -795,3 +795,162 @@ export const UserDummy = [
     avatar: images.avatar,
   },
 ];
+
+export const PetVaccinationHistoryDummy = [
+  { date: "April 10, 2021", vaccine: "DHPP", notes: "First dose" },
+  { date: "May 15, 2021", vaccine: "DHPP", notes: "Second dose" },
+  { date: "June 20, 2021", vaccine: "Rabies", notes: "Initial vaccination" },
+  { date: "April 15, 2022", vaccine: "DHPP", notes: "Annual booster" },
+  { date: "June 18, 2022", vaccine: "Rabies", notes: "Annual booster" },
+  { date: "April 20, 2023", vaccine: "DHPP", notes: "Annual booster" },
+  { date: "June 15, 2023", vaccine: "Rabies", notes: "Annual booster" },
+];
+
+export const PetMedicalHistoryDummy = [
+  {
+    date: "July 5, 2021",
+    reason: "Lameness (right hind leg)",
+    diagnosis: "Mild sprain",
+    treatment: "Rest, anti-inflammatory meds",
+    notes: "Full recovery within a week",
+  },
+  {
+    date: "Feb 12, 2022",
+    reason: "Annual wellness exam",
+    diagnosis: "Healthy",
+    treatment: "Routine vaccinations",
+    notes: "Heartworm test negative",
+  },
+  {
+    date: "Sept 8, 2022",
+    reason: "Vomiting, lethargy",
+    diagnosis: "Gastroenteritis",
+    treatment: "Anti-nausea meds, fluids",
+    notes: "Suspected dietary indiscretion",
+  },
+  {
+    date: "April 3, 2023",
+    reason: "Ear infection (both ears)",
+    diagnosis: "Otitis externa",
+    treatment: "Ear cleaning, topical meds",
+    notes: "Responded well to treatment",
+  },
+  {
+    date: "June 25, 2023",
+    reason: "Skin allergies",
+    diagnosis: "Atopic dermatitis",
+    treatment: "Antihistamines, medicated shampoo",
+    notes: "Ongoing management with allergy-friendly diet",
+  },
+];
+
+export const VetAppointmentsDummy = [
+  {
+    appointmentId: "A001",
+    petName: "Max",
+    ownerName: "John Smith",
+    date: "2024-05-22",
+    time: "10:30 AM",
+    reasonForVisit: "Annual checkup & vaccinations",
+    vetAssigned: "Dr. Lee",
+    notes: "Up-to-date on rabies, needs flea treatment",
+    vetClinic: "Friendly Paws Clinic",
+  },
+  {
+    appointmentId: "A002",
+    petName: "Bella",
+    ownerName: "Jane Doe",
+    date: "2024-05-23",
+    time: "2:00 PM",
+    reasonForVisit: "Lameness (right hind leg)",
+    vetAssigned: "Dr. Nguyen",
+    notes: "Possible sprain, X-ray scheduled",
+    vetClinic: "Animal Care Center",
+  },
+  {
+    appointmentId: "A003",
+    petName: "Charlie",
+    ownerName: "Emily Brown",
+    date: "2024-05-24",
+    time: "9:00 AM",
+    reasonForVisit: "Ear infection",
+    vetAssigned: "Dr. Lee",
+    notes: "Culture taken, medication prescribed",
+    vetClinic: "City Vet Clinic",
+  },
+  {
+    appointmentId: "A004",
+    petName: "Lucy",
+    ownerName: "Mark Davis",
+    date: "2024-05-28",
+    time: "4:30 PM",
+    reasonForVisit: "Dental cleaning",
+    vetAssigned: "Dr. Patel",
+    notes: "Requires pre-anesthetic bloodwork",
+    vetClinic: "Friendly Paws Clinic",
+  },
+  {
+    appointmentId: "A005",
+    petName: "Buddy",
+    ownerName: "Sarah Jones",
+    date: "2024-05-30",
+    time: "11:00 AM",
+    reasonForVisit: "Follow-up (post-surgery recheck)",
+    vetAssigned: "Dr. Nguyen",
+    notes: "Incision healing well",
+    vetClinic: "Animal Care Center",
+  },
+  {
+    appointmentId: "A006",
+    petName: "Daisy",
+    ownerName: "Peter Lee",
+    date: "2024-06-01",
+    time: "3:15 PM",
+    reasonForVisit: "Skin allergy consult",
+    vetAssigned: "Dr. Patel",
+    notes: "Allergy testing recommended",
+    vetClinic: "Friendly Paws Clinic",
+  },
+  {
+    appointmentId: "A007",
+    petName: "Oliver",
+    ownerName: "Maria Garcia",
+    date: "2024-06-03",
+    time: "8:45 AM",
+    reasonForVisit: "New puppy wellness exam",
+    vetAssigned: "Dr. Lee",
+    notes: "First round of vaccines given",
+    vetClinic: "City Vet Clinic",
+  },
+];
+
+export const CategoryDummy = [
+  {
+    id: 1,
+    name: "Food & Treats",
+  },
+  {
+    id: 2,
+    name: "Health & Wellness",
+  },
+  {
+    id: 3,
+    name: "Toys & Entertainment",
+  },
+  {
+    id: 4,
+    name: "Housing & Travel",
+  },
+  {
+    id: 5,
+    name: "Accessories & Apparel",
+  },
+  {
+    id: 6,
+    name: "Cleaning & Waste Management",
+  },
+  {
+    id: 7,
+    name: "Aquatics & Small Animals",
+  },
+];

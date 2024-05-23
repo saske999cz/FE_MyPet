@@ -10,11 +10,13 @@ const SearchInput = ({
   handleChangeText,
   handleSearch,
   otherStyles,
+  style,
   ...props
 }) => {
   return (
     <View
       className={`h-10 px-4 bg-white border-2 border-gray-300 rounded-lg focus:border-[#3D1E14] items-center flex-row space-x-4 + ${otherStyles}`}
+      style={style}
     >
       <TextInput
         value={value}
