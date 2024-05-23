@@ -102,6 +102,54 @@ const ScreensLayout = () => {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="CreateAdoptionRequest"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="EditMyProfile"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="VaccinationDetail"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="MedicalDetail"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="Security"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="AnimalShelter"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="MyAppointment"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="ShopCategoryDetail"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
     </>
   );

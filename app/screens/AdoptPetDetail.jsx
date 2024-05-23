@@ -10,7 +10,8 @@ import AdoptPetCard from "../../components/AdoptPetCard";
 import { FlashList } from "@shopify/flash-list";
 
 const AdoptPetDetail = () => {
-  const { petName, petAge, petImage, petGender } = useLocalSearchParams();
+  const { petId, petName, petAge, petImage, petGender } =
+    useLocalSearchParams();
 
   const [mainImage, setMainImage] = useState(PetImages[0]);
   const [currentImageIndex, setCurrentImageIndex] = useState(1);
@@ -22,6 +23,33 @@ const AdoptPetDetail = () => {
     setMainImage(image);
     setCurrentImageIndex(PetImages.indexOf(image) + 1);
   };
+
+  const handleCreateAdoptionRequest = () => {
+    router.push({
+      pathname: "../screens/CreateAdoptionRequest",
+      params: {
+        petId: petId,
+        petName: petName,
+        petAge: petAge,
+        petImage: petImage,
+        petGender: petGender,
+      },
+    });
+  };
+
+  const handleAnimalShelterPress = () => {
+    router.push({
+      pathname: "../screens/AnimalShelter",
+      params: {
+        petId: petId,
+        petName: petName,
+        petAge: petAge,
+        petImage: petImage,
+        petGender: petGender,
+      },
+    });
+  };
+
   return (
     <SafeAreaView className="h-full">
       <ScrollView>
@@ -98,7 +126,10 @@ const AdoptPetDetail = () => {
               </View>
             </View>
             <View className="w-[30%] h-full flex-row items-center justify-end">
-              <TouchableOpacity className="w-20 h-8 bg-[#f59e0b] rounded-md flex-row items-center justify-center mr-4">
+              <TouchableOpacity
+                className="w-20 h-8 bg-[#f59e0b] rounded-md flex-row items-center justify-center mr-4"
+                onPress={handleCreateAdoptionRequest}
+              >
                 <FontAwesomeIcon
                   icon={icons.faHeart}
                   size={13}
@@ -121,7 +152,10 @@ const AdoptPetDetail = () => {
           </View>
           <View className="w-full h-[4px] bg-gray-300 mt-5"></View>
           <View className="w-full px-4 mt-4">
-            <View className="w-full flex-row items-center justify-start">
+            <TouchableOpacity
+              className="w-full flex-row items-center justify-start"
+              onPress={handleAnimalShelterPress}
+            >
               <View className="w-10 h-10 rounded-full border-[0.5px] border-solid border-gray-200">
                 <Image
                   source={images.clinic1}
@@ -151,7 +185,7 @@ const AdoptPetDetail = () => {
                   </Text>
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
           <View className="w-full h-[4px] bg-gray-300 mt-5"></View>
           <View className="w-full px-4 h-fit">

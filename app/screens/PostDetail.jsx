@@ -74,7 +74,7 @@ const PostDetail = () => {
                   style={{ aspectRatio: 16 / 9 }}
                 >
                   <Image
-                    source={uploadedImage}
+                    source={images.husky}
                     className="w-full h-[100%] rounded-md"
                   />
                 </View>

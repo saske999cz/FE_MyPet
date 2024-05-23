@@ -26,6 +26,7 @@ import {
 import FormField from "../../components/FormField";
 import * as ImagePicker from "expo-image-picker";
 import DynamicImageGrid from "../../components/DynamicImageGrid";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Home = () => {
   const [refreshing, setRefreshing] = useState(false);

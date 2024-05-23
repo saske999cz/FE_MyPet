@@ -40,11 +40,13 @@ const DropDownBox = ({ placeHolderText, data, onSelect }) => {
                 className="w-full h-12 flex-row items-center justify-start mt-1 rounded-md"
                 key={index}
               >
-                <Image
-                  source={item.image}
-                  className="w-10 h-10 rounded-full"
-                  resizeMode="cover"
-                />
+                {item.image && (
+                  <Image
+                    source={item.image}
+                    className="w-10 h-10 rounded-full"
+                    resizeMode="cover"
+                  />
+                )}
                 <Text className="text-[14px] font-semibold text-black ml-2">
                   {item.name}
                 </Text>

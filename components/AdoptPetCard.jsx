@@ -4,11 +4,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../constants";
 import { router } from "expo-router";
 
-const AdoptPetCard = ({ image, name, gender, age, isHorizontal }) => {
+const AdoptPetCard = ({ id, image, name, gender, age, isHorizontal }) => {
   const handlePress = () => {
     router.push({
       pathname: "../screens/AdoptPetDetail",
       params: {
+        petId: id,
         petName: name,
         petAge: age,
         petImage: image,

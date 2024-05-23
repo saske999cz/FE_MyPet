@@ -8,7 +8,6 @@ import {
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import CustomButton from "../../components/CustomButton";
 import { images } from "../../constants";
 import { icons } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
@@ -20,12 +19,22 @@ import { setGlobalState, useGlobalState } from "../../state/GlobalState";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { FlashList } from "@shopify/flash-list";
+import { get_best_selling_products } from "../../api/MarketApi";
 
 const Header_Max_Height = 230;
 const Header_Min_Height = 70;
 const Scroll_Distance = Header_Max_Height - Header_Min_Height;
 
-const DynamicHeader = ({ value, activeCategory, handlePressCategory }) => {
+const DynamicHeader = ({
+  value,
+  activeCategory,
+  handlePressCategory,
+  cartLength,
+  isScrolled,
+}) => {
+  const handleCartPress = () => {
+    router.push("../screens/Cart");
+  };
   const animatedHeaderHeight = value.interpolate({
     inputRange: [0, Scroll_Distance],
     outputRange: [Header_Max_Height, Header_Min_Height],
@@ -110,6 +119,18 @@ const DynamicHeader = ({ value, activeCategory, handlePressCategory }) => {
     }),
   };
 
+  const animatedAvatar = {
+    transform: [
+      {
+        translateY: value.interpolate({
+          inputRange: [0, Scroll_Distance - 25],
+          outputRange: [-4, 71],
+          extrapolate: "clamp",
+        }),
+      },
+    ],
+  };
+
   return (
     <Animated.View
       style={{
@@ -121,14 +142,37 @@ const DynamicHeader = ({ value, activeCategory, handlePressCategory }) => {
       }}
     >
       <View className="w-full h-32 absolute top-0 left-0 right-0"></View>
-      <View className="w-full flex-col items-center justify-between px-4 mb-4">
-        <View className="w-full flex-row items-center justify-start mb-3">
+      <View className="w-full flex-col items-center justify-between px-4 mb-4 z-3">
+        <View className="w-full flex-row items-center justify-between mb-3">
           <Animated.Image
             source={images.logoBlack}
             className="w-32 h-16 -ml-4 -mt-1"
             resizeMode="contain"
             style={animatedLogo}
           />
+          <Animated.View
+            className="w-[20%] flex-row items-center justify-end"
+            style={animatedAvatar}
+          >
+            <TouchableOpacity
+              className="w-10 h-10 bg-[#e5e7eb] rounded-full flex-row items-center justify-center mr-2"
+              onPress={handleCartPress}
+            >
+              {cartLength > 0 ? (
+                <View className="w-4 h-4 rounded-full bg-red-500 absolute top-0 right-0 -mr-1 flex-row items-center justify-center ">
+                  <Text className="text-[12px] font-semibold text-white">
+                    {cartLength}
+                  </Text>
+                </View>
+              ) : null}
+              <FontAwesomeIcon
+                icon={icons.faCartShopping}
+                size={20}
+                style={{ color: "#000000" }}
+              />
+            </TouchableOpacity>
+            <Image source={images.avatar} className="w-9 h-9 rounded-full" />
+          </Animated.View>
         </View>
         <Animated.View
           className="w-full flex-row items-center justify-center"
@@ -137,13 +181,14 @@ const DynamicHeader = ({ value, activeCategory, handlePressCategory }) => {
           <SearchInput
             title="Search"
             placeholder="Search"
-            otherStyles={"w-[88%]"}
+            otherStyles={"w-[88%] z-10"}
+            style={{ pointerEvents: "auto" }}
           />
           <Animated.View
             className="w-10 h-10 rounded-lg ml-2"
             style={animatedLogo}
           >
-            <TouchableOpacity className="w-full h-full bg-[#e5e7eb] rounded-lg flex-row items-center justify-center ">
+            <TouchableOpacity className="w-full h-full bg-[#e5e7eb] rounded-lg flex-row items-center justify-center">
               <FontAwesomeIcon
                 icon={icons.faFilter}
                 size={20}
@@ -152,16 +197,19 @@ const DynamicHeader = ({ value, activeCategory, handlePressCategory }) => {
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
-        <Animated.View
-          className="w-full flex-row items-center justify-center"
-          style={animatedSmallSearchBar}
-        >
-          <SearchInput
-            title="Search"
-            placeholder="Search"
-            otherStyles={"w-[76%] absolute top-0 left-0 -ml-3 -mt-9"}
-          />
-        </Animated.View>
+        {isScrolled && (
+          <Animated.View
+            className="w-full flex-row items-center justify-center"
+            style={animatedSmallSearchBar}
+          >
+            <SearchInput
+              title="Search"
+              placeholder="Search"
+              otherStyles={"w-[76%] absolute top-0 left-0 -ml-3 -mt-9 z-4"}
+              style={{ pointerEvents: "auto" }}
+            />
+          </Animated.View>
+        )}
       </View>
       <Animated.View
         className="w-full flex-col items-start justify-center px-4 mb-3"
@@ -240,6 +288,10 @@ const market = () => {
   const cartStatus = useGlobalState("cartStatus");
   const [refreshing, setRefreshing] = useState(false);
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
+  const [products, setProducts] = useState(null);
+  const [token, setToken] = useState(null);
+
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -282,11 +334,7 @@ const market = () => {
     }, 2000);
   }, [toastStatus[0]]);
 
-  handleCartPress = () => {
-    router.push("../screens/Cart");
-  };
-
-  handlePressCategory = (category) => {
+  const handlePressCategory = (category) => {
     setActiveCategory(category);
   };
 
@@ -296,46 +344,55 @@ const market = () => {
     setRefreshing(false);
   };
 
+  useEffect(() => {
+    scrollOffsetY.addListener(({ value }) => {
+      if (value > 0) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    });
+    return () => {
+      scrollOffsetY.removeAllListeners();
+    };
+  }, [scrollOffsetY]);
+
+  useEffect(() => {
+    get_best_selling_products(1, 10)
+      .then((res) => {
+        if (res.status === 200) {
+          setProducts(res.data.data);
+        } else {
+          alert(res.data.status);
+        }
+      })
+      .catch((err) => {
+        alert(err.message);
+      });
+  }, []);
+
   return (
     <SafeAreaView className="w-full h-full flex-col">
-      <SafeAreaView className="flex-row items-center w-[25%] justify-around absolute top-0 right-0 z-50 mr-2 mt-3">
-        <TouchableOpacity
-          className="w-10 h-10 bg-[#e5e7eb] rounded-full flex-row items-center justify-center -mr-2"
-          onPress={handleCartPress}
-        >
-          {cartLength > 0 ? (
-            <View className="w-4 h-4 rounded-full bg-red-500 absolute top-0 right-0 -mr-1 flex-row items-center justify-center ">
-              <Text className="text-[12px] font-semibold text-white">
-                {cartLength}
-              </Text>
-            </View>
-          ) : null}
-          <FontAwesomeIcon
-            icon={icons.faCartShopping}
-            size={20}
-            style={{ color: "#000000" }}
-          />
-        </TouchableOpacity>
-        <Image source={images.avatar} className="w-9 h-9 rounded-full" />
-      </SafeAreaView>
       <DynamicHeader
         value={scrollOffsetY}
         activeCategory={activeCategory}
         handlePressCategory={handlePressCategory}
+        cartLength={cartLength}
+        isScrolled={isScrolled}
       />
       <FlashList
         scrollEventThrottle={5}
-        data={ItemDummy}
+        data={products}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View className="w-[96%] h-fit ml-1">
             <ItemCard
               id={item.id}
-              title={item.title}
+              title={item.name}
               price={item.price}
               image={item.image}
               rating={item.rating}
-              soldUnits={item.soldUnits}
+              soldUnits={item.sold_quantity}
               shop={item.shop}
               isHorizontal={false}
             />

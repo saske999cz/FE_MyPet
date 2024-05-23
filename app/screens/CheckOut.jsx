@@ -31,9 +31,9 @@ const StepperBar = ({ steps, currentStep }) => {
             className={`w-[${
               screenWidth / 4
             }] h-5 flex-row items-center justify-center`}
+            key={index}
           >
             <View
-              key={index}
               className={`h-6 w-6 flex-row items-center justify-center rounded-full  ${
                 currentStep === step || currentStep > step
                   ? "bg-amber-400 border-[1px] border-solid border-orange-300"
@@ -285,7 +285,7 @@ const CheckOut = () => {
                   disabled={currentStep !== 3 ? true : false}
                 >
                   <Text className="text-[14px] font-semibold text-white">
-                    Submit
+                    Proceed
                   </Text>
                 </TouchableOpacity>
               )}

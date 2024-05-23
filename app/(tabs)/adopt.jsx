@@ -22,7 +22,12 @@ const Header_Max_Height = 230;
 const Header_Min_Height = 70;
 const Scroll_Distance = Header_Max_Height - Header_Min_Height;
 
-const DynamicHeader = ({ value, activeCategory, handlePressCategory }) => {
+const DynamicHeader = ({
+  value,
+  activeCategory,
+  handlePressCategory,
+  isScrolled,
+}) => {
   const animatedHeaderHeight = value.interpolate({
     inputRange: [0, Scroll_Distance],
     outputRange: [Header_Max_Height, Header_Min_Height],
@@ -127,13 +132,13 @@ const DynamicHeader = ({ value, activeCategory, handlePressCategory }) => {
           />
         </View>
         <Animated.View
-          className="w-full flex-row items-center justify-center -mt-1"
+          className="w-full flex-row items-center justify-center -mt-1 mb-1"
           style={animatedSearchBar}
         >
           <SearchInput
             title="Search"
             placeholder="Search"
-            otherStyles={"w-[88%]"}
+            otherStyles={"w-[88%] z-10"}
           />
           <Animated.View
             className="w-10 h-10 rounded-lg ml-2"
@@ -148,16 +153,18 @@ const DynamicHeader = ({ value, activeCategory, handlePressCategory }) => {
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
-        <Animated.View
-          className="w-full flex-row items-center justify-center"
-          style={animatedSmallSearchBar}
-        >
-          <SearchInput
-            title="Search"
-            placeholder="Search"
-            otherStyles={"w-[62%] absolute top-0 left-0 -ml-4 -mt-9"}
-          />
-        </Animated.View>
+        {isScrolled && (
+          <Animated.View
+            className="w-full flex-row items-center justify-center"
+            style={animatedSmallSearchBar}
+          >
+            <SearchInput
+              title="Search"
+              placeholder="Search"
+              otherStyles={"w-[62%] absolute top-0 left-0 -ml-4 -mt-9"}
+            />
+          </Animated.View>
+        )}
       </View>
       <Animated.View
         className="w-full flex-col items-start justify-center px-4 mb-3"
@@ -231,18 +238,32 @@ const DynamicHeader = ({ value, activeCategory, handlePressCategory }) => {
 const adopt = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState("none");
+  const [isScrolled, setIsScrolled] = useState(false);
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
   const onRefresh = async () => {
     setRefreshing(true);
     // fetch data
     setRefreshing(false);
   };
-  handlePressCategory = (category) => {
+  const handlePressCategory = (category) => {
     setActiveCategory(category);
   };
+
+  useEffect(() => {
+    scrollOffsetY.addListener(({ value }) => {
+      if (value > 0) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    });
+    return () => {
+      scrollOffsetY.removeAllListeners();
+    };
+  }, []);
   return (
     <SafeAreaView className="h-full flex-col">
-      <SafeAreaView className="flex-row items-center w-[25%] justify-around absolute top-0 right-0 z-50 mr-10 mt-3">
+      <SafeAreaView className="flex-row items-center w-[25%] justify-around absolute top-0 right-0 z-50 mr-10 mt-[14px]">
         <View className="w-28 h-10 flex-row items-center justify-center mr-12">
           <Text className="text-[12px] font-semibold mr-1 mt-1">
             Da Nang, VN
@@ -259,12 +280,14 @@ const adopt = () => {
         value={scrollOffsetY}
         activeCategory={activeCategory}
         handlePressCategory={handlePressCategory}
+        isScrolled={isScrolled}
       />
       <FlashList
         data={PetDummy}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <AdoptPetCard
+            id={item.id}
             image={item.image}
             name={item.name}
             gender={item.gender}

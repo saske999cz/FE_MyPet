@@ -74,6 +74,10 @@ const MyProfile = () => {
     router.push("../screens/MyPet");
   };
 
+  const handleNavigateEditMyProfile = () => {
+    router.push("../screens/EditMyProfile");
+  };
+
   const renderBackdrop = useCallback(
     (props) => (
       <BottomSheetBackdrop
@@ -157,14 +161,17 @@ const MyProfile = () => {
                   <Text className="text-[20px] font-bold">John Doe</Text>
                 </View>
                 <View className="w-full h-9 flex-row items-center justify-start">
-                  <TouchableOpacity className="w-32 h-9 flex-row items-center justify-center bg-amber-500 rounded-md ml-4">
+                  <TouchableOpacity
+                    className="w-32 h-9 flex-row items-center justify-center bg-amber-500 rounded-md ml-4"
+                    onPress={handleNavigateEditMyProfile}
+                  >
                     <FontAwesomeIcon
                       icon={icons.faPen}
                       size={12}
                       style={{ color: "#ffffff" }}
                     />
                     <Text className="text-[15px] font-semibold ml-2 text-white">
-                      Edit profile
+                      Edit info
                     </Text>
                   </TouchableOpacity>
                 </View>

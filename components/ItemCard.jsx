@@ -1,8 +1,10 @@
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../constants";
 import { router } from "expo-router";
+import { FIREBASE_STORAGE } from "../firebaseConfig";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 const ItemCard = ({
   id,
@@ -13,7 +15,21 @@ const ItemCard = ({
   soldUnits,
   shop,
   isHorizontal,
+  description,
 }) => {
+  const [imageUrl, setImageUrl] = useState(null);
+
+  useEffect(() => {
+    const fetchImage = async () => {
+      const imageRef = ref(FIREBASE_STORAGE, image);
+      const url = await getDownloadURL(imageRef);
+      setImageUrl(url);
+      console.log(url);
+    };
+
+    fetchImage();
+  }, [image]);
+
   const handlePress = () => {
     router.push({
       pathname: "../screens/ProductDetail",
@@ -23,20 +39,22 @@ const ItemCard = ({
         rating: rating,
         price: price,
         soldUnits: soldUnits,
-        shop: shop,
+        shop: shop.name,
         image: image,
+        description: description,
       },
     });
   };
+
   return (
     <TouchableOpacity
       className={`w-${
         isHorizontal ? "44" : "full"
-      } h-56 flex-col items-center justify-start mt-3 bg-white rounded-lg border-[0.5px] border-solid border-gray-200`}
+      } h-60 flex-col items-center justify-start mt-3 bg-white rounded-lg border-[0.5px] border-solid border-gray-200`}
       onPress={handlePress}
     >
-      <Image source={image} className="w-full h-32 rounded-t-lg" />
-      <View className="w-full flex-col items-start justify-center mt-2 px-2">
+      <Image source={{ uri: imageUrl }} className="w-full h-32 rounded-t-lg" />
+      <View className="w-full flex-col items-start justify-center mt-2 px-2 max-h-20">
         <Text className="text-[13px] mb-1">{title}</Text>
         <View className="flex-row items-center justify-start mb-1">
           <FontAwesomeIcon
@@ -69,7 +87,7 @@ const ItemCard = ({
             size={10}
             style={{ color: "#14b8a6" }}
           />
-          <Text className="ml-1 text-[10px]">{shop}</Text>
+          <Text className="ml-1 text-[10px]">{shop.name}</Text>
         </View>
       </View>
     </TouchableOpacity>

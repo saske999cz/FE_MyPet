@@ -32,9 +32,9 @@ const StepperBar = ({ steps, currentStep }) => {
             className={`w-[${
               screenWidth / 4
             }] h-5 flex-row items-center justify-center`}
+            key={index}
           >
             <View
-              key={index}
               className={`h-6 w-6 flex-row items-center justify-center rounded-full  ${
                 currentStep === step || currentStep > step
                   ? "bg-amber-400 border-[1px] border-solid border-orange-300"
@@ -72,7 +72,7 @@ const BasicInfoScreen = () => {
       className={`h-fit w-[${formWidth}] flex-col items-center justify-start px-4 mt-4`}
     >
       <Text className="text-[17px] font-semibold mb-4">
-        Patient Information
+        Personal Information
       </Text>
       <DropDownBox
         data={PetDummy}

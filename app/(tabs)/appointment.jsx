@@ -20,7 +20,7 @@ const Header_Max_Height = 144;
 const Header_Min_Height = 70;
 const Scroll_Distance = Header_Max_Height - Header_Min_Height;
 
-const DynamicHeader = ({ value }) => {
+const DynamicHeader = ({ value, isScrolled }) => {
   const animatedHeaderHeight = value.interpolate({
     inputRange: [0, Scroll_Distance],
     outputRange: [Header_Max_Height, Header_Min_Height],
@@ -119,7 +119,7 @@ const DynamicHeader = ({ value }) => {
           />
         </View>
         <Animated.View
-          className="w-full flex-row items-center justify-center -mt-1"
+          className="w-full flex-row items-center justify-center -mt-1 mb-1"
           style={animatedSearchBar}
         >
           <SearchInput
@@ -140,16 +140,18 @@ const DynamicHeader = ({ value }) => {
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
-        <Animated.View
-          className="w-full flex-row items-center justify-center"
-          style={animatedSmallSearchBar}
-        >
-          <SearchInput
-            title="Search"
-            placeholder="Search"
-            otherStyles={"w-[62%] absolute top-0 left-0 -ml-4 -mt-9"}
-          />
-        </Animated.View>
+        {isScrolled && (
+          <Animated.View
+            className="w-full flex-row items-center justify-center"
+            style={animatedSmallSearchBar}
+          >
+            <SearchInput
+              title="Search"
+              placeholder="Search"
+              otherStyles={"w-[62%] absolute top-0 left-0 -ml-4 -mt-9"}
+            />
+          </Animated.View>
+        )}
       </View>
     </Animated.View>
   );
@@ -158,18 +160,30 @@ const DynamicHeader = ({ value }) => {
 const apointment = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState("none");
+  const [isScrolled, setIsScrolled] = useState(false);
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
   const onRefresh = async () => {
     setRefreshing(true);
     // fetch data
     setRefreshing(false);
   };
-  handlePressCategory = (category) => {
-    setActiveCategory(category);
-  };
+
+  useEffect(() => {
+    scrollOffsetY.addListener(({ value }) => {
+      if (value > 0) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    });
+    return () => {
+      scrollOffsetY.removeAllListeners();
+    };
+  }, []);
+
   return (
     <SafeAreaView className="h-full flex-col">
-      <SafeAreaView className="flex-row items-center w-[25%] justify-around absolute top-0 right-0 z-50 mr-10 mt-3">
+      <SafeAreaView className="flex-row items-center w-[25%] justify-around absolute top-0 right-0 z-50 mr-10 mt-[14px]">
         <View className="w-28 h-10 flex-row items-center justify-center mr-12">
           <Text className="text-[12px] font-semibold mr-1 mt-1">
             Da Nang, VN
@@ -182,7 +196,7 @@ const apointment = () => {
         </View>
         <Image source={images.avatar} className="w-9 h-9 rounded-full" />
       </SafeAreaView>
-      <DynamicHeader value={scrollOffsetY} />
+      <DynamicHeader value={scrollOffsetY} isScrolled={isScrolled} />
       <FlashList
         data={ClinicDummy}
         keyExtractor={(item) => item.id}
