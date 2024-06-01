@@ -22,7 +22,7 @@ export default function App() {
   return (
     <SafeAreaView className="bg-[#E58E37] h-full">
       {hasLaunched ? (
-        <View className="w-full h-full flex-row items-center justify-center -ml-12">
+        <View className="w-full h-full flex-row items-center justify-center -ml-6">
           <Image
             source={images.logoWhite}
             className="w-[300px] h-[150px]"
