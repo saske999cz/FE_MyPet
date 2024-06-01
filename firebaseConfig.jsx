@@ -1,13 +1,21 @@
 import { initializeApp } from "firebase/app";
 import { getStorage } from "firebase/storage";
+import {
+  API_KEY,
+  AUTH_DOMAIN,
+  PROJECT_ID,
+  STORAGE_BUCKET,
+  MESSAGING_SENDER_ID,
+  APP_ID,
+} from "@env";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCUpFH3N2cKhv1VFzTSmZJNC0O_VKoRoWQ",
-  authDomain: "petshop-3d4ae.firebaseapp.com",
-  projectId: "petshop-3d4ae",
-  storageBucket: "petshop-3d4ae.appspot.com",
-  messagingSenderId: "224358929740",
-  appId: "1:224358929740:web:d7415b94d29830f25eabe9",
+  apiKey: API_KEY,
+  authDomain: AUTH_DOMAIN,
+  projectId: PROJECT_ID,
+  storageBucket: STORAGE_BUCKET,
+  messagingSenderId: MESSAGING_SENDER_ID,
+  appId: APP_ID,
 };
 
 export const FIREBASE_APP = initializeApp(firebaseConfig);

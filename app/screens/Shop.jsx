@@ -284,10 +284,10 @@ const Shop = () => {
                 </View>
               </View>
               <View className="w-full h-fit">
-                <View className="w-full h-8 mt-1">
+                <View className="w-full h-8 mt-4">
                   <Text className="text-[13px] font-semibold">Description</Text>
                 </View>
-                <View className="w-full h-fit mt-2">
+                <View className="w-full h-fit">
                   <Text className="text-[13px]">{shopDescription}</Text>
                 </View>
               </View>
