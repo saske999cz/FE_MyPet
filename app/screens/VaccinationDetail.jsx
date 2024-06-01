@@ -27,7 +27,7 @@ const VaccinationDetail = () => {
       <View className="w-full h-[1px] bg-gray-300 px-4"></View>
       <ScrollView className="w-full h-full">
         <View className="w-full px-4 h-fit flex-col">
-          <View className="w-full flex-row items-center justify-start mt-8 px-4">
+          <View className="w-full flex-row items-center justify-start mt-8 px-2">
             <View className="w-[20%] flex-row items-center justify-start">
               <Text className="text-[15px] font-semibold">Date: </Text>
             </View>
@@ -35,7 +35,7 @@ const VaccinationDetail = () => {
               <Text className="text-[14px] ml-1">12/12/2021</Text>
             </View>
           </View>
-          <View className="w-full flex-row items-center justify-start mt-8 px-4 h-fit">
+          <View className="w-full flex-row items-center justify-start mt-8 px-2 h-fit">
             <View className="w-[20%] flex-row items-center justify-start">
               <Text className="text-[15px] font-semibold">Vaccine: </Text>
             </View>
@@ -43,7 +43,7 @@ const VaccinationDetail = () => {
               <Text className="text-[14px] ml-1">DHPP</Text>
             </View>
           </View>
-          <View className="w-full flex-row items-center justify-start mt-8 px-4 h-fit">
+          <View className="w-full flex-row items-center justify-start mt-8 px-2 h-fit">
             <View className="w-[20%] flex-row items-center justify-start">
               <Text className="text-[15px] font-semibold">Notes: </Text>
             </View>

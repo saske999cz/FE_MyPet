@@ -52,6 +52,13 @@ import { faArrowUpFromBracket } from "@fortawesome/free-solid-svg-icons";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { faCalendarDays } from "@fortawesome/free-solid-svg-icons";
 import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faTruckFast } from "@fortawesome/free-solid-svg-icons";
+import { faCreditCard } from "@fortawesome/free-solid-svg-icons";
+import { faArrowsRotate } from "@fortawesome/free-solid-svg-icons";
+import { faBox } from "@fortawesome/free-solid-svg-icons";
+import { faHospitalUser } from "@fortawesome/free-solid-svg-icons";
+import { faGlobe } from "@fortawesome/free-solid-svg-icons";
+import { faArrowTurnUp } from "@fortawesome/free-solid-svg-icons";
 
 export default {
   play,
@@ -108,4 +115,11 @@ export default {
   faXmark,
   faCalendarDays,
   faChevronRight,
+  faTruckFast,
+  faCreditCard,
+  faArrowsRotate,
+  faBox,
+  faHospitalUser,
+  faGlobe,
+  faArrowTurnUp,
 };

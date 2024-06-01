@@ -27,47 +27,47 @@ const MedicalDetail = () => {
       <View className="w-full h-[1px] bg-gray-300 px-4"></View>
       <ScrollView className="w-full h-full">
         <View className="w-full px-4 h-fit flex-col">
-          <View className="w-full flex-row items-center justify-start mt-8 px-4">
-            <View className="w-[20%] flex-row items-center justify-start">
-              <Text className="text-[15px] font-semibold">Date: </Text>
+          <View className="w-full flex-row items-center justify-start mt-8 px-2">
+            <View className="w-[25%] flex-row items-center justify-start">
+              <Text className="text-[14px] font-semibold">Date: </Text>
             </View>
-            <View className="w-[80%] flex-row items-center justify-start">
+            <View className="w-[75%] flex-row items-center justify-start">
               <Text className="text-[14px] ml-1">12/12/2021</Text>
             </View>
           </View>
-          <View className="w-full flex-row items-center justify-start mt-8 px-4 h-fit">
-            <View className="w-[20%] flex-row items-center justify-start">
-              <Text className="text-[15px] font-semibold">Reason: </Text>
+          <View className="w-full flex-row items-center justify-start mt-8 px-2 h-fit">
+            <View className="w-[25%] flex-row items-center justify-start">
+              <Text className="text-[14px] font-semibold">Reason: </Text>
             </View>
-            <View className="w-[80%] flex-row items-center justify-start h-fit">
+            <View className="w-[75%] flex-row items-center justify-start h-fit">
               <Text className="text-[14px] ml-1">
                 Lameness (right hind leg)
               </Text>
             </View>
           </View>
-          <View className="w-full flex-row items-center justify-start mt-8 px-4 h-fit">
-            <View className="w-[20%] flex-row items-center justify-start">
-              <Text className="text-[15px] font-semibold">Diagnosis: </Text>
+          <View className="w-full flex-row items-center justify-start mt-8 px-2 h-fit">
+            <View className="w-[25%] flex-row items-center justify-start">
+              <Text className="text-[14px] font-semibold">Diagnosis: </Text>
             </View>
-            <View className="w-[80%] flex-row items-center justify-start h-fit">
+            <View className="w-[75%] flex-row items-center justify-start h-fit">
               <Text className="text-[14px] ml-1">Mild sprain</Text>
             </View>
           </View>
-          <View className="w-full flex-row items-center justify-start mt-8 px-4 h-fit">
-            <View className="w-[20%] flex-row items-center justify-start">
-              <Text className="text-[15px] font-semibold">Treatment: </Text>
+          <View className="w-full flex-row items-center justify-start mt-8 px-2 h-fit">
+            <View className="w-[25%] flex-row items-center justify-start">
+              <Text className="text-[14px] font-semibold">Treatment: </Text>
             </View>
-            <View className="w-[80%] flex-row items-center justify-start h-fit">
+            <View className="w-[75%] flex-row items-center justify-start h-fit">
               <Text className="text-[14px] ml-1">
                 Rest, anti-inflammatory meds
               </Text>
             </View>
           </View>
-          <View className="w-full flex-row items-center justify-start mt-8 px-4 h-fit">
-            <View className="w-[20%] flex-row items-center justify-start">
-              <Text className="text-[15px] font-semibold">Notes: </Text>
+          <View className="w-full flex-row items-center justify-start mt-8 px-2 h-fit">
+            <View className="w-[25%] flex-row items-center justify-start">
+              <Text className="text-[14px] font-semibold">Notes: </Text>
             </View>
-            <View className="w-[80%] flex-row items-center justify-start h-fit">
+            <View className="w-[75%] flex-row items-center justify-start h-fit">
               <Text className="text-[14px] ml-1">
                 Full recovery within a week
               </Text>

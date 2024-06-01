@@ -22,6 +22,9 @@ const menu = () => {
   const handlePressMyAppointment = () => {
     router.push("../screens/MyAppointment");
   };
+  const handlePressMyOrder = () => {
+    router.push("../screens/MyOrder");
+  };
   return (
     <SafeAreaView className="h-full flex-col items-center justify-start">
       <View className="flex-row w-full items-center justify-between px-4">
@@ -63,6 +66,16 @@ const menu = () => {
             <Image source={images.appointment} className="w-7 h-7" />
           </View>
           <Text className="text-[14px] font-semibold">My Appointments</Text>
+        </TouchableOpacity>
+        <View className="w-full h-[1px] bg-gray-200"></View>
+        <TouchableOpacity
+          className="w-full h-16 flex-row items-center justify-start px-4 py-2"
+          onPress={handlePressMyOrder}
+        >
+          <View className="w-16 h-16 flex-row items-center justify-center">
+            <Image source={images.checklist} className="w-7 h-7" />
+          </View>
+          <Text className="text-[14px] font-semibold">My Orders</Text>
         </TouchableOpacity>
         <View className="w-full h-[1px] bg-gray-200"></View>
         <TouchableOpacity className="w-full h-16 flex-row items-center justify-start px-4 py-2">

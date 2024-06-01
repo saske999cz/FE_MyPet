@@ -26,12 +26,10 @@ import {
   PetMedicalHistoryDummy,
 } from "../../dummy/FakeData";
 import { useLocalSearchParams } from "expo-router";
-import { set } from "date-fns";
 
 const MyPetDetail = () => {
   const { id, name, age, gender } = useLocalSearchParams();
   const [refreshing, setRefreshing] = useState(false);
-  const [activeCategory, setActiveCategory] = useState("posts");
   const bottomSheetModalRef = useRef(null);
   const [vaccinationHistory, setVaccinationHistory] = useState([]);
   const [medicalHistory, setMedicalHistory] = useState([]);
@@ -101,6 +99,10 @@ const MyPetDetail = () => {
 
   const handleMedicalDetailNavigation = () => {
     router.push("../screens/MedicalDetail");
+  };
+
+  const handleVaccinationDetailNavigation = () => {
+    router.push("../screens/VaccinationDetail");
   };
 
   return (
@@ -210,6 +212,7 @@ const MyPetDetail = () => {
                           : ""
                       }`}
                       key={index}
+                      onPress={handleVaccinationDetailNavigation}
                     >
                       <Text className="w-1/3 text-base text-center text-[13px]">
                         {item.vaccine}

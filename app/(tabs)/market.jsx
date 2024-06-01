@@ -282,16 +282,14 @@ const DynamicHeader = ({
 
 const market = () => {
   const [cartLength, setCartLength] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [products, setProducts] = useState(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [activeCategory, setActiveCategory] = useState("none");
   const addedCartItem = useGlobalState("addedCartItem");
   const toastStatus = useGlobalState("toastStatus");
   const cartStatus = useGlobalState("cartStatus");
-  const [refreshing, setRefreshing] = useState(false);
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
-  const [products, setProducts] = useState(null);
-  const [token, setToken] = useState(null);
-
-  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {

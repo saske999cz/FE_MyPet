@@ -45,6 +45,7 @@ const SignIn = () => {
       })
       .catch((err) => {
         alert("An error occurred, please try again");
+        setIsSubmitting(false);
       });
   };
   return (
@@ -67,6 +68,7 @@ const SignIn = () => {
               value={form.password}
               handleChangeText={(e) => setForm({ ...form, password: e })}
               otherStyles="mt-7"
+              secureText={true}
             />
             <CustomButton
               title="Sign In"
