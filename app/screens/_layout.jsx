@@ -150,6 +150,30 @@ const ScreensLayout = () => {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="MyOrder"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="OrderDetail"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="AppointmentDetail"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="AllReviews"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
     </>
   );

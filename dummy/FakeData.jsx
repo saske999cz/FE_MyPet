@@ -1,6 +1,7 @@
 import { View, Text } from "react-native";
 import React from "react";
 import { images } from "../constants";
+import { sub } from "date-fns";
 
 export const ExperimentData = [
   {
@@ -652,6 +653,65 @@ export const CommentDummy = [
     userAvatar: images.avatar1,
     userName: "Jane Smith",
     comment: "This is great! I really enjoyed this article.",
+    subcomment: [
+      {
+        id: 101,
+        commentId: 1, // Sub-comment under comment id 1
+        userId: "user456", // Michael Johnson replying
+        userName: "Michael Johnson",
+        comment: "I agree, Jane! It was a really insightful read.",
+        userAvatar: images.avatar1,
+      },
+      {
+        id: 102,
+        commentId: 3, // Sub-comment under comment id 3
+        userId: "user123", // Jane Smith replying
+        userName: "Jane Smith",
+        comment:
+          "I can try to answer your question, Emily. What specifically are you wondering about?I can try to answer your question, Emily. What specifically are you wondering about?I can try to answer your question, Emily. What specifically are you wondering about?I can try to answer your question, Emily. What specifically are you wondering about?",
+        userAvatar: images.avatar2,
+      },
+      {
+        id: 103,
+        commentId: 4, // Sub-comment under comment id 4
+        userId: "user789", // Emily Davis replying
+        userName: "Emily Davis",
+        comment: "Right?! I was so impressed.",
+        userAvatar: images.avatar3,
+      },
+      {
+        id: 104,
+        commentId: 5, // Sub-comment under comment id 5
+        userId: "user101", // David Wilson replying
+        userName: "David Wilson",
+        comment: "Me too, Olivia! It really resonated with me.",
+        userAvatar: images.avatar4,
+      },
+      {
+        id: 105,
+        commentId: 6, // Sub-comment under comment id 5
+        userId: "user101", // David Wilson replying
+        userName: "Harry Maguaire",
+        comment: "Me too, Olivia! It really resonated with me.",
+        userAvatar: images.avatar5,
+      },
+      {
+        id: 106,
+        commentId: 7, // Sub-comment under comment id 5
+        userId: "user101", // David Wilson replying
+        userName: "John Cina",
+        comment: "GGWP. I really like this article",
+        userAvatar: images.avatar6,
+      },
+      {
+        id: 107,
+        commentId: 8, // Sub-comment under comment id 5
+        userId: "user101", // David Wilson replying
+        userName: "Alex Lock",
+        comment: "Wow this is amazing",
+        userAvatar: images.avatar7,
+      },
+    ],
   },
   {
     id: 2,
@@ -659,6 +719,7 @@ export const CommentDummy = [
     userAvatar: images.avatar2,
     userName: "Michael Johnson",
     comment: "Thanks for sharing this information. It's very helpful.",
+    subcomment: [],
   },
   {
     id: 3,
@@ -666,6 +727,7 @@ export const CommentDummy = [
     userAvatar: images.avatar3,
     userName: "Emily Davis",
     comment: "I have a question about this topic. Can someone clarify?",
+    subcomment: [],
   },
   {
     id: 4,
@@ -673,6 +735,7 @@ export const CommentDummy = [
     userAvatar: images.avatar5,
     userName: "David Wilson",
     comment: "Wow, this is amazing!",
+    subcomment: [],
   },
   {
     id: 5,
@@ -680,6 +743,7 @@ export const CommentDummy = [
     userAvatar: images.avatar4,
     userName: "Olivia Brown",
     comment: "I completely agree with this point of view.",
+    subcomment: [],
   },
 ];
 
@@ -855,6 +919,7 @@ export const VetAppointmentsDummy = [
     vetAssigned: "Dr. Lee",
     notes: "Up-to-date on rabies, needs flea treatment",
     vetClinic: "Friendly Paws Clinic",
+    telephone: "0123456789",
   },
   {
     appointmentId: "A002",
@@ -866,6 +931,7 @@ export const VetAppointmentsDummy = [
     vetAssigned: "Dr. Nguyen",
     notes: "Possible sprain, X-ray scheduled",
     vetClinic: "Animal Care Center",
+    telephone: "0123456789",
   },
   {
     appointmentId: "A003",
@@ -877,6 +943,7 @@ export const VetAppointmentsDummy = [
     vetAssigned: "Dr. Lee",
     notes: "Culture taken, medication prescribed",
     vetClinic: "City Vet Clinic",
+    telephone: "0123456789",
   },
   {
     appointmentId: "A004",
@@ -888,6 +955,7 @@ export const VetAppointmentsDummy = [
     vetAssigned: "Dr. Patel",
     notes: "Requires pre-anesthetic bloodwork",
     vetClinic: "Friendly Paws Clinic",
+    telephone: "0123456789",
   },
   {
     appointmentId: "A005",
@@ -899,6 +967,7 @@ export const VetAppointmentsDummy = [
     vetAssigned: "Dr. Nguyen",
     notes: "Incision healing well",
     vetClinic: "Animal Care Center",
+    telephone: "0123456789",
   },
   {
     appointmentId: "A006",
@@ -910,6 +979,7 @@ export const VetAppointmentsDummy = [
     vetAssigned: "Dr. Patel",
     notes: "Allergy testing recommended",
     vetClinic: "Friendly Paws Clinic",
+    telephone: "0123456789",
   },
   {
     appointmentId: "A007",
@@ -921,6 +991,7 @@ export const VetAppointmentsDummy = [
     vetAssigned: "Dr. Lee",
     notes: "First round of vaccines given",
     vetClinic: "City Vet Clinic",
+    telephone: "0123456789",
   },
 ];
 
@@ -952,5 +1023,176 @@ export const CategoryDummy = [
   {
     id: 7,
     name: "Aquatics & Small Animals",
+  },
+];
+
+export const OrdersDummy = [
+  // First order (same as before)
+  {
+    orderId: "SHOPEE123456789",
+    orderDate: "2024-05-28",
+    customer: {
+      name: "John Doe",
+      address: "123 Main Street, Da Nang, Vietnam",
+      phone: "+84 123 456 789",
+      email: "johndoe@email.com",
+    },
+    items: [
+      {
+        id: 1,
+        name: "Dog Food",
+        price: 200000,
+        image: images.dogfood,
+        rating: 4.8,
+        soldUnits: 100,
+        shop: "Pet Shop",
+        quantity: 2,
+      },
+      {
+        id: 2,
+        name: "Bowl",
+        price: 50000,
+        image: images.dogbowl,
+        rating: 4.5,
+        soldUnits: 852,
+        shop: "Pet Shop",
+        quantity: 1,
+      },
+    ],
+    subtotal: 950000,
+    shippingFee: 50000,
+    discount: 20000,
+    total: 980000,
+    paymentMethod: "Credit Card (Visa ending in 1234)",
+    status: "Processing",
+    notes: "Please ensure all items are in stock before shipping.",
+    estimatedDeliveryDate: "2024-06-02",
+  },
+
+  {
+    orderId: "SHOPEE987654321",
+    orderDate: "2024-05-26",
+    customer: {
+      name: "Jane Smith",
+      address: "456 Elm Street, Ho Chi Minh City, Vietnam",
+      phone: "+84 987 654 321",
+      email: "janesmith@email.com",
+    },
+    items: [
+      {
+        id: 1,
+        name: "Dog Food",
+        price: 200000,
+        image: images.dogfood,
+        rating: 4.8,
+        soldUnits: 100,
+        shop: "Pet Shop",
+        quantity: 2,
+      },
+      {
+        id: 2,
+        name: "Bowl",
+        price: 50000,
+        image: images.dogbowl,
+        rating: 4.5,
+        soldUnits: 852,
+        shop: "Pet Shop",
+        quantity: 1,
+      },
+    ],
+    subtotal: 1130000,
+    shippingFee: 45000,
+    discount: 0,
+    total: 1175000,
+    paymentMethod: "Cash on Delivery",
+    status: "Delivered",
+    notes: "",
+    estimatedDeliveryDate: "2024-05-29",
+  },
+
+  {
+    orderId: "SHOPEE555555555",
+    orderDate: "2024-05-22",
+    customer: {
+      name: "Michael Johnson",
+      address: "789 Oak Avenue, Hanoi, Vietnam",
+      phone: "+84 555 555 555",
+      email: "michaeljohnson@email.com",
+    },
+    items: [
+      {
+        id: 1,
+        name: "Dog Food",
+        price: 200000,
+        image: images.dogfood,
+        rating: 4.8,
+        soldUnits: 100,
+        shop: "Pet Shop",
+        quantity: 2,
+      },
+      {
+        id: 2,
+        name: "Bowl",
+        price: 50000,
+        image: images.dogbowl,
+        rating: 4.5,
+        soldUnits: 852,
+        shop: "Pet Shop",
+        quantity: 1,
+      },
+    ],
+    subtotal: 530000,
+    shippingFee: 30000,
+    discount: 10000,
+    total: 550000,
+    paymentMethod: "ShopeePay",
+    status: "Shipped",
+    notes: "Fragile items, handle with care.",
+    estimatedDeliveryDate: "2024-05-25",
+  },
+];
+
+export const ProductReviewDummy = [
+  {
+    id: 1,
+    userName: "Jane Smith",
+    userAvatar: images.avatar1,
+    review:
+      "This product exceeded my expectations! Excellent quality and value.",
+    rating: 5,
+    createdTime: "2024-05-28T08:15:00", // 2 days ago
+  },
+  {
+    id: 2,
+    userName: "Michael Johnson",
+    userAvatar: images.avatar2,
+    review:
+      "I've been using this for a week now, and it's working great. Highly recommend.",
+    rating: 4,
+    createdTime: "2024-05-29T14:30:00", // Yesterday
+  },
+  {
+    id: 3,
+    userName: "Emily Davis",
+    userAvatar: images.avatar3,
+    review: "Good product, but the instructions could be clearer.",
+    rating: 3,
+    createdTime: "2024-05-30T09:45:00", // Today
+  },
+  {
+    id: 4,
+    userName: "David Wilson",
+    userAvatar: images.avatar4,
+    review: "Love the sleek design! It's a perfect fit for my needs.",
+    rating: 5,
+    createdTime: "2024-05-25T16:20:00", // 5 days ago
+  },
+  {
+    id: 5,
+    userName: "Olivia Brown",
+    userAvatar: images.avatar5,
+    review: "Worth every penny.  I would definitely buy this again.",
+    rating: 5,
+    createdTime: "2024-05-26T12:00:00", // 4 days ago
   },
 ];

@@ -65,6 +65,7 @@ import vnpay from "../assets/images/vnpay.png";
 import paypal from "../assets/images/paypal.png";
 import nodata from "../assets/images/nodatafound.png";
 import logout from "../assets/images/logout.png";
+import checklist from "../assets/images/checklist.png";
 
 export default {
   profile,
@@ -134,4 +135,5 @@ export default {
   paypal,
   nodata,
   logout,
+  checklist,
 };

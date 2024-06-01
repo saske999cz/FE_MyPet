@@ -142,20 +142,20 @@ const MyProfile = () => {
                       className="w-full h-full rounded-full"
                     />
                   </View>
-                  <View className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 left-0 ml-32 -mb-9 border-[1px] border-solid border-[#F2F2F2]">
+                  <TouchableOpacity className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 left-0 ml-32 -mb-9 border-[1px] border-solid border-[#F2F2F2]">
                     <FontAwesomeIcon
                       icon={icons.faCamera}
                       size={16}
                       style={{ color: "#000000" }}
                     />
-                  </View>
-                  <View className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 right-0 mr-2 mb-2 border-[1px] border-solid border-[#F2F2F2]">
+                  </TouchableOpacity>
+                  <TouchableOpacity className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 right-0 mr-2 mb-2 border-[1px] border-solid border-[#F2F2F2]">
                     <FontAwesomeIcon
                       icon={icons.faCamera}
                       size={16}
                       style={{ color: "#000000" }}
                     />
-                  </View>
+                  </TouchableOpacity>
                 </View>
                 <View className="w-full h-12 flex-row items-center justify-start px-4 mt-8">
                   <Text className="text-[20px] font-bold">John Doe</Text>
@@ -289,7 +289,7 @@ const MyProfile = () => {
             }}
           >
             <View className="w-full h-full bg-[#F5F5F7] flex-col items-center justify-start">
-              <View className="w-[90%] h-40 flex-col items-start justify-start px-6 bg-white border-solid border-[0.5px] border-gray-200 rounded-lg">
+              <View className="w-[92%] h-40 flex-col items-start justify-start px-6 bg-white border-solid border-[0.5px] border-gray-200 rounded-lg">
                 <TouchableOpacity
                   className="w-full h-12 flex-row items-center justify-start mt-2"
                   onPress={handleEditPost}

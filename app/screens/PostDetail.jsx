@@ -145,6 +145,7 @@ const PostDetail = () => {
                         username={item.userName}
                         avatar={item.userAvatar}
                         comment={item.comment}
+                        subcomment={item.subcomment}
                       />
                     )}
                     estimatedItemSize={20}
