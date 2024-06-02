@@ -17,6 +17,7 @@ import { FlashList } from "@shopify/flash-list";
 import {
   get_product_detail_by_id,
   get_best_selling_products_by_category,
+  get_product_reviews,
 } from "../../api/MarketApi";
 import { FIREBASE_STORAGE } from "../../firebaseConfig";
 import { getDownloadURL, ref, listAll } from "firebase/storage";
@@ -164,9 +165,7 @@ const ProductDetail = () => {
     const fetchImage = async () => {
       try {
         const imageFolderRef = ref(FIREBASE_STORAGE, folderUrl);
-
         const res = await listAll(imageFolderRef);
-
         if (res.items.length > 0) {
           const url = await getDownloadURL(res.items[0]);
           setMainImage(url);
@@ -178,7 +177,7 @@ const ProductDetail = () => {
             .catch((error) => console.error(error));
         }
       } catch (error) {
-        console.error("Error fetching image:", error);
+        console.log("Error fetching product detail image:", error);
       }
     };
 
@@ -202,6 +201,24 @@ const ProductDetail = () => {
     };
     fetchSimilarProducts();
   }, [productCategory]);
+
+  // useEffect(() => {
+  //   const fetchReviews = async () => {
+  //     try {
+  //       get_product_reviews(productDetail.id, productDetail.shop_id, 1, 5).then(
+  //         (res) => {
+  //           if (res && res.status === 200) {
+  //             setReviews(res.data.data);
+  //             setFlags((prev) => [...prev, true]);
+  //           }
+  //         }
+  //       );
+  //     } catch (error) {
+  //       console.error("Error fetching similar products:", error);
+  //     }
+  //   };
+  //   fetchSimilarProducts();
+  // }, [productCategory]);
 
   useEffect(() => {
     if (flags.length === 4 && flags.every((flag) => flag === true)) {

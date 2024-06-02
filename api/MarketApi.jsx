@@ -336,3 +336,61 @@ export const get_all_category_type_with_amount_of_products_by_shop = async (
     return error.response.data;
   }
 };
+
+export const get_best_selling_products_by_shop_and_category_type = async (
+  shopId,
+  categoryType,
+  page_number,
+  num_of_page
+) => {
+  if (page_number === undefined) {
+    page_number = 1;
+  }
+  if (num_of_page === undefined) {
+    num_of_page = 10;
+  }
+  const token = await AsyncStorage.getItem("token");
+  try {
+    const response = await ApiManager(
+      `customer/products/best-selling/shop/${shopId}/category-type?page_number=${page_number}&num_of_page=${num_of_page}&category_type=${categoryType}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response;
+  } catch (error) {
+    return error.response.data;
+  }
+};
+
+export const get_product_reviews = async (
+  productId,
+  shopId,
+  page_number,
+  num_of_page
+) => {
+  if (page_number === undefined) {
+    page_number = 1;
+  }
+  if (num_of_page === undefined) {
+    num_of_page = 10;
+  }
+  const token = await AsyncStorage.getItem("token");
+  try {
+    const response = await ApiManager(
+      `customer/ratings/product/${productId}/shop/${shopId}?page_number=${page_number}&num_of_page=${num_of_page}`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return response;
+  } catch (error) {
+    return error.response.data;
+  }
+};
