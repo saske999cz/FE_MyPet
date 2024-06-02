@@ -30,11 +30,11 @@ const MedicalCenterCard = ({
     <TouchableOpacity
       className={`w-${
         isHorizontal ? "44" : "[96%]"
-      } h-56 rounded-lg flex-col items-center justify-start mt-3 bg-white border-[0.5px] border-solid border-gray-200 ml-1`}
+      } h-60 rounded-lg flex-col items-center justify-start mt-3 bg-white border-[0.5px] border-solid border-gray-200 ml-1`}
       onPress={handlePress}
     >
       <Image source={image} className="w-full h-32 rounded-t-lg" />
-      <View className="w-full flex-col items-start justify-center mt-2 px-2">
+      <View className="w-full flex-col items-start justify-center mt-2 px-2 py-2">
         <View className="flex-row items-center justify-start mb-2">
           <FontAwesomeIcon
             icon={icons.faHospital}
