@@ -16,9 +16,10 @@ import Toast from "react-native-toast-message";
 import { setGlobalState, useGlobalState } from "../../state/GlobalState";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { get_best_selling_products } from "../../api/MarketApi";
+import { get_best_selling_products, search_product } from "../../api/MarketApi";
 import { Image } from "expo-image";
 import LottieView from "lottie-react-native";
+import { set } from "date-fns";
 
 const Header_Max_Height = 230;
 const Header_Min_Height = 70;
@@ -30,6 +31,9 @@ const DynamicHeader = ({
   handlePressCategory,
   cartLength,
   isScrolled,
+  query,
+  setQuery,
+  handleSearch,
 }) => {
   const [avatarUrl, setAvatarUrl] = useState(null);
 
@@ -199,6 +203,9 @@ const DynamicHeader = ({
             placeholder="Search"
             otherStyles={"w-[88%] z-10"}
             style={{ pointerEvents: "auto" }}
+            value={query}
+            onChangeText={(text) => setQuery(text)}
+            handleSearch={handleSearch}
           />
           <Animated.View
             className="w-10 h-10 rounded-lg ml-2"
@@ -223,6 +230,9 @@ const DynamicHeader = ({
               placeholder="Search"
               otherStyles={"w-[76%] absolute top-0 left-0 -ml-3 -mt-9 z-4"}
               style={{ pointerEvents: "auto" }}
+              value={query}
+              onChangeText={(text) => setQuery(text)}
+              handleSearch={handleSearch}
             />
           </Animated.View>
         )}
@@ -308,6 +318,8 @@ const market = () => {
   const cartStatus = useGlobalState("cartStatus");
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
   const [isLoading, setIsLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
 
   const handleLoadMore = () => {
     setPage((prevPage) => prevPage + 1);
@@ -359,7 +371,23 @@ const market = () => {
       setActiveCategory("");
       return;
     }
+    setQuery("");
+    setSearching(false);
     setActiveCategory(category);
+  };
+
+  const handleSearch = () => {
+    if (query === "") {
+      setProducts([]);
+      setIsLoading(true);
+      setSearching(false);
+      setPage(1);
+      return;
+    }
+    setProducts([]);
+    setIsLoading(true);
+    setSearching(true);
+    setPage(1);
   };
 
   const onRefresh = async () => {
@@ -382,27 +410,49 @@ const market = () => {
   }, [scrollOffsetY]);
 
   useEffect(() => {
-    get_best_selling_products(page, 10, activeCategory)
-      .then((res) => {
-        if (res && res.status === 200 && res.data.data.length > 0) {
-          const newProducts = [...products, ...res.data.data];
-          const uniqueProducts = newProducts.reduce((unique, product) => {
-            if (!unique.find((item) => item.id === product.id)) {
-              unique.push(product);
-            }
-            return unique;
-          }, []);
-          setProducts(uniqueProducts);
-          setIsLoading(false);
-        } else {
-          setProducts([]);
-          setIsLoading(false);
-        }
-      })
-      .catch((err) => {
-        alert(err.message);
-      });
-  }, [page, activeCategory]);
+    if (searching) {
+      search_product(query, page, 10)
+        .then((res) => {
+          if (res && res.status === 200 && res.data.data.length > 0) {
+            const newProducts = [...products, ...res.data.data];
+            const uniqueProducts = newProducts.reduce((unique, product) => {
+              if (!unique.find((item) => item.id === product.id)) {
+                unique.push(product);
+              }
+              return unique;
+            }, []);
+            setProducts(uniqueProducts);
+            setIsLoading(false);
+          } else {
+            setProducts([]);
+            setIsLoading(false);
+          }
+        })
+        .catch((err) => {
+          alert(err.message);
+        });
+    } else
+      get_best_selling_products(page, 10, activeCategory)
+        .then((res) => {
+          if (res && res.status === 200 && res.data.data.length > 0) {
+            const newProducts = [...products, ...res.data.data];
+            const uniqueProducts = newProducts.reduce((unique, product) => {
+              if (!unique.find((item) => item.id === product.id)) {
+                unique.push(product);
+              }
+              return unique;
+            }, []);
+            setProducts(uniqueProducts);
+            setIsLoading(false);
+          } else {
+            setProducts([]);
+            setIsLoading(false);
+          }
+        })
+        .catch((err) => {
+          alert(err.message);
+        });
+  }, [page, activeCategory, searching]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -418,6 +468,9 @@ const market = () => {
         handlePressCategory={handlePressCategory}
         cartLength={cartLength}
         isScrolled={isScrolled}
+        query={query}
+        setQuery={setQuery}
+        handleSearch={handleSearch}
       />
       {isLoading ? (
         <View className="w-full h-full flex-row items-start justify-center">

@@ -231,10 +231,16 @@ export const get_highest_rating_products_by_shop_and_category = async (
   }
 };
 
-export const search_product = async (query) => {
+export const search_product = async (query, page_number, num_of_page) => {
+  if (page_number === undefined) {
+    page_number = 1;
+  }
+  if (num_of_page === undefined) {
+    num_of_page = 10;
+  }
   try {
     const response = await ApiManager.get(
-      `/customer/products/search?name=${query}`
+      `/customer/products/search?name=${query}&page_number=${page_number}&num_of_page=${num_of_page}`
     );
     return response;
   } catch (error) {
