@@ -14,7 +14,7 @@ import { images } from "../../constants";
 import { router, useLocalSearchParams } from "expo-router";
 import FormField from "../../components/FormField";
 import { PetDummy } from "../../dummy/FakeData";
-import DropDownBox from "../../components/DropDownBox";
+import DropDownBox from "../../components/PetDropDownBox";
 import CalendarPicker from "react-native-calendar-picker";
 
 const screenWidth = Dimensions.get("window").width;

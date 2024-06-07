@@ -174,6 +174,18 @@ const ScreensLayout = () => {
             headerShown: false,
           }}
         />
+        <Stack.Screen
+          name="SimilarProducts"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="SimilarClinics"
+          options={{
+            headerShown: false,
+          }}
+        />
       </Stack>
     </>
   );

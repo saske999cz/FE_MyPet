@@ -14,10 +14,10 @@ import { icons } from "../../constants";
 import { images } from "../../constants";
 import { useLocalSearchParams } from "expo-router";
 import ItemCard from "../../components/ItemCard";
-import { get_best_selling_products_by_shop_and_category_type } from "../../api/MarketApi";
+import { get_best_selling_products_by_category } from "../../api/MarketApi";
 
-const ShopCategoryDetail = () => {
-  const { shopId, category } = useLocalSearchParams();
+const SimilarProducts = () => {
+  const { categoryId } = useLocalSearchParams();
   const [refreshing, setRefreshing] = useState(false);
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
@@ -38,23 +38,20 @@ const ShopCategoryDetail = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        get_best_selling_products_by_shop_and_category_type(
-          shopId,
-          category,
-          page,
-          10
-        ).then((res) => {
-          if (res && res.status === 200) {
-            const newProducts = [...products, ...res.data.data];
-            const uniqueProducts = newProducts.reduce((unique, product) => {
-              if (!unique.find((item) => item.id === product.id)) {
-                unique.push(product);
-              }
-              return unique;
-            }, []);
-            setProducts(uniqueProducts);
+        get_best_selling_products_by_category(categoryId, page, 10).then(
+          (res) => {
+            if (res && res.status === 200) {
+              const newProducts = [...products, ...res.data.data];
+              const uniqueProducts = newProducts.reduce((unique, product) => {
+                if (!unique.find((item) => item.id === product.id)) {
+                  unique.push(product);
+                }
+                return unique;
+              }, []);
+              setProducts(uniqueProducts);
+            }
           }
-        });
+        );
       } catch (error) {
         console.error("Error fetching similar products:", error);
       }
@@ -75,7 +72,7 @@ const ShopCategoryDetail = () => {
             style={{ color: "#f59e0b" }}
           />
         </TouchableOpacity>
-        <Text className="font-bold text-[16px]">{category}</Text>
+        <Text className="font-bold text-[16px]">Similar Products</Text>
       </View>
       <FlatList
         scrollEventThrottle={2}
@@ -115,4 +112,4 @@ const ShopCategoryDetail = () => {
   );
 };
 
-export default ShopCategoryDetail;
+export default SimilarProducts;

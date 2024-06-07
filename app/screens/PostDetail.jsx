@@ -1,5 +1,13 @@
-import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
-import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+  TextInput,
+  StyleSheet,
+} from "react-native";
+import React, { useState } from "react";
 import MinimalPost from "../../components/MinimalPost";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
@@ -22,11 +30,22 @@ const PostDetail = () => {
     dislikes,
     comments,
   } = useLocalSearchParams();
+  const [myComment, setMyComment] = useState("");
+  const [numberOfLines, setNumberOfLines] = useState(1);
+
+  const onContentSizeChange = (event) => {
+    const { contentSize, layoutMeasurement } = event.nativeEvent;
+    const lineHeight = StyleSheet.flatten(styles.textInput).lineHeight;
+    const numLines = Math.ceil(contentSize.height / lineHeight);
+    setNumberOfLines(numLines); // Update the state
+  };
+
   const handleBack = () => {
     router.back();
   };
+
   return (
-    <View className="flex-1">
+    <View className="w-full h-full">
       <SafeAreaView className="flex-1">
         <View className="w-full h-12 flex-row items-center justify-center">
           <TouchableOpacity
@@ -156,8 +175,39 @@ const PostDetail = () => {
           </View>
         </ScrollView>
       </SafeAreaView>
+      <View className="w-full h-fit min-h-[80px] flex-row items-start justify-center bg-white absolute bottom-0 py-4">
+        <TextInput
+          placeholder="Write a comment..."
+          className="w-[80%] px-4 rounded-full border-[1px] border-solid border-gray-300 mr-2"
+          numberOfLines={numberOfLines} // Dynamically set
+          onContentSizeChange={onContentSizeChange}
+          onChangeText={(e) => setMyComment(e)}
+          value={myComment}
+          style={styles.textInput}
+        />
+        <TouchableOpacity className="w-10 h-10 flex-row items-center justify-center -mt-[2px]">
+          <FontAwesomeIcon
+            icon={icons.faLocationArrow}
+            size={30}
+            style={{ color: "#f59e0b", transform: [{ rotate: "44deg" }] }}
+          />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 export default PostDetail;
+
+const styles = StyleSheet.create({
+  container: {
+    padding: 20,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    fontSize: 14,
+    lineHeight: 16, // Important for accurate line calculation
+  },
+});

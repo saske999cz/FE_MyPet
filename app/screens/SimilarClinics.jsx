@@ -1,25 +1,23 @@
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   RefreshControl,
   FlatList,
 } from "react-native";
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
-import { images } from "../../constants";
 import { useLocalSearchParams } from "expo-router";
-import ItemCard from "../../components/ItemCard";
-import { get_best_selling_products_by_shop_and_category_type } from "../../api/MarketApi";
+import MedicalCenterCard from "../../components/MedicalCenterCard";
+import { get_highest_rating_medical_centers } from "../../api/MedicalCenterApi";
 
-const ShopCategoryDetail = () => {
-  const { shopId, category } = useLocalSearchParams();
+const SimilarClinics = () => {
+  const { medicalCenterId } = useLocalSearchParams();
   const [refreshing, setRefreshing] = useState(false);
-  const [products, setProducts] = useState([]);
+  const [similarClinics, setSimilarClinics] = useState([]);
   const [page, setPage] = useState(1);
 
   const onRefresh = async () => {
@@ -36,30 +34,34 @@ const ShopCategoryDetail = () => {
   };
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchSimilarClinics = async () => {
       try {
-        get_best_selling_products_by_shop_and_category_type(
-          shopId,
-          category,
-          page,
-          10
-        ).then((res) => {
+        get_highest_rating_medical_centers(page, 10).then((res) => {
           if (res && res.status === 200) {
-            const newProducts = [...products, ...res.data.data];
-            const uniqueProducts = newProducts.reduce((unique, product) => {
-              if (!unique.find((item) => item.id === product.id)) {
-                unique.push(product);
+            const fetchedClinics = res.data.data;
+            const filteredClinics = fetchedClinics.filter(
+              (clinic) => clinic.medical_center_id != medicalCenterId
+            );
+            const newClinics = [...similarClinics, ...filteredClinics];
+            const uniqueClinics = newClinics.reduce((unique, clinic) => {
+              if (
+                !unique.find(
+                  (item) => item.medical_center_id === clinic.medical_center_id
+                )
+              ) {
+                unique.push(clinic);
               }
               return unique;
             }, []);
-            setProducts(uniqueProducts);
+            setSimilarClinics(uniqueClinics);
           }
         });
       } catch (error) {
-        console.error("Error fetching similar products:", error);
+        console.error("Error fetching similar clinics:", error);
       }
     };
-    fetchProducts();
+
+    fetchSimilarClinics();
   }, [page]);
 
   return (
@@ -75,34 +77,32 @@ const ShopCategoryDetail = () => {
             style={{ color: "#f59e0b" }}
           />
         </TouchableOpacity>
-        <Text className="font-bold text-[16px]">{category}</Text>
+        <Text className="font-bold text-[16px]">Other Medical Centers</Text>
       </View>
       <FlatList
-        scrollEventThrottle={2}
-        data={products}
-        keyExtractor={(item) => item.id}
+        data={similarClinics}
+        keyExtractor={(item) => item.medical_center_id}
         renderItem={({ item }) => (
-          <View className="w-[47%] h-fit">
-            <ItemCard
-              id={item.id}
-              title={item.name}
-              price={item.price}
-              image={item.image}
-              rating={item.rating}
-              soldUnits={item.sold_quantity}
-              shop={item.shop}
-              isHorizontal={false}
-            />
-          </View>
+          <MedicalCenterCard
+            id={item.medical_center_id}
+            image={item.avatar}
+            name={item.name}
+            rating={item.rating}
+            distance={5}
+            workingHours={item.work_time}
+            telephone={item.phone}
+            description={item.description}
+            isHorizontal={false}
+          />
         )}
         numColumns={2}
         columnWrapperStyle={{
           justifyContent: "space-around",
         }}
+        estimatedItemSize={20}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        estimatedItemSize={500}
         showsVerticalScrollIndicator={false}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
@@ -115,4 +115,4 @@ const ShopCategoryDetail = () => {
   );
 };
 
-export default ShopCategoryDetail;
+export default SimilarClinics;

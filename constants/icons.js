@@ -59,6 +59,11 @@ import { faBox } from "@fortawesome/free-solid-svg-icons";
 import { faHospitalUser } from "@fortawesome/free-solid-svg-icons";
 import { faGlobe } from "@fortawesome/free-solid-svg-icons";
 import { faArrowTurnUp } from "@fortawesome/free-solid-svg-icons";
+import { faCaretLeft } from "@fortawesome/free-solid-svg-icons";
+import { faLocationArrow } from "@fortawesome/free-solid-svg-icons";
+import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { faCakeCandles } from "@fortawesome/free-solid-svg-icons";
+import { faClipboard } from "@fortawesome/free-solid-svg-icons";
 
 export default {
   play,
@@ -122,4 +127,9 @@ export default {
   faHospitalUser,
   faGlobe,
   faArrowTurnUp,
+  faCaretLeft,
+  faLocationArrow,
+  faEnvelope,
+  faCakeCandles,
+  faClipboard,
 };

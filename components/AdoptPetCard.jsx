@@ -1,5 +1,5 @@
 import { View, Text, Image, TouchableOpacity } from "react-native";
-import React from "react";
+import React, { memo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../constants";
 import { router } from "expo-router";
@@ -20,8 +20,8 @@ const AdoptPetCard = ({ id, image, name, gender, age, isHorizontal }) => {
   return (
     <TouchableOpacity
       className={`w-${
-        isHorizontal ? "44" : "[96%]"
-      } flex-col items-center justify-start mt-3 bg-white rounded-lg border-[0.5px] border-solid border-gray-200 ml-1`}
+        isHorizontal ? "44" : "[47%]"
+      } flex-col items-center justify-start mt-3 bg-white rounded-lg border-[0.5px] border-solid border-gray-200`}
       onPress={handlePress}
     >
       <View style={{ width: "100%", aspectRatio: 1 }}>
@@ -55,4 +55,4 @@ const AdoptPetCard = ({ id, image, name, gender, age, isHorizontal }) => {
   );
 };
 
-export default AdoptPetCard;
+export default memo(AdoptPetCard);

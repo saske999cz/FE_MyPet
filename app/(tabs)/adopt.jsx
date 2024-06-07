@@ -2,21 +2,20 @@ import {
   View,
   Text,
   ScrollView,
-  Image,
   TouchableOpacity,
   RefreshControl,
   Animated,
+  FlatList,
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import CustomButton from "../../components/CustomButton";
-import { images } from "../../constants";
-import { icons } from "../../constants";
+import { icons, blurhash, images } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import AdoptPetCard from "../../components/AdoptPetCard";
 import SearchInput from "../../components/SearchInput";
 import { PetDummy } from "../../dummy/FakeData";
-import { FlashList } from "@shopify/flash-list";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Image } from "expo-image";
 
 const Header_Max_Height = 230;
 const Header_Min_Height = 70;
@@ -186,7 +185,7 @@ const DynamicHeader = ({
               <Image
                 source={images.dog}
                 className="w-5 h-5"
-                resizeMode="contain"
+                contentFit="contain"
               />
             </View>
             <Text className={`text-[13px] ml-2`}>Dogs</Text>
@@ -205,7 +204,7 @@ const DynamicHeader = ({
               <Image
                 source={images.cat}
                 className="w-5 h-5"
-                resizeMode="contain"
+                contentFit="contain"
               />
             </View>
             <Text className={`text-[13px] ml-2`}>Cats</Text>
@@ -224,7 +223,7 @@ const DynamicHeader = ({
               <Image
                 source={images.bird}
                 className="w-5 h-5"
-                resizeMode="contain"
+                contentFit="contain"
               />
             </View>
             <Text className={`text-[13px] ml-2`}>Birds</Text>
@@ -236,6 +235,7 @@ const DynamicHeader = ({
 };
 
 const adopt = () => {
+  const [avatarUrl, setAvatarUrl] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState("none");
   const [isScrolled, setIsScrolled] = useState(false);
@@ -261,6 +261,16 @@ const adopt = () => {
       scrollOffsetY.removeAllListeners();
     };
   }, []);
+
+  useEffect(() => {
+    const getUserAvatar = async () => {
+      const userAvatar = await AsyncStorage.getItem("userAvatar");
+      setAvatarUrl(userAvatar);
+    };
+
+    getUserAvatar();
+  }, []);
+
   return (
     <SafeAreaView className="h-full flex-col">
       <SafeAreaView className="flex-row items-center w-[25%] justify-around absolute top-0 right-0 z-50 mr-10 mt-[14px]">
@@ -274,7 +284,14 @@ const adopt = () => {
             style={{ color: "#ef4444" }}
           />
         </View>
-        <Image source={images.avatar} className="w-9 h-9 rounded-full" />
+        {avatarUrl && (
+          <Image
+            source={{ uri: avatarUrl }}
+            className="w-9 h-9 rounded-full"
+            transition={0}
+            placeholder={{ blurhash }}
+          />
+        )}
       </SafeAreaView>
       <DynamicHeader
         value={scrollOffsetY}
@@ -282,7 +299,7 @@ const adopt = () => {
         handlePressCategory={handlePressCategory}
         isScrolled={isScrolled}
       />
-      <FlashList
+      <FlatList
         data={PetDummy}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (

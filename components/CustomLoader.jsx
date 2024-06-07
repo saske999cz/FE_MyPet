@@ -37,3 +37,34 @@ export const ProductDetailLoader = () => (
     <Rect x="20" y="500" rx="3" ry="3" width="290" height="25" />
   </ContentLoader>
 );
+
+export const ReviewLoader = () => (
+  <ContentLoader
+    speed={1}
+    width={500}
+    height={110}
+    viewBox="0 0 500 110"
+    backgroundColor="#dcdcdc"
+    foregroundColor="#9ca3af"
+  >
+    <Rect x="20" y="0" rx="50" ry="50" width="40" height="40" />
+    <Rect x="70" y="0" rx="4" ry="4" width="200" height="20" />
+    <Rect x="70" y="30" rx="3" ry="3" width="200" height="20" />
+    <Rect x="20" y="65" rx="3" ry="3" width="340" height="20" />
+  </ContentLoader>
+);
+
+export const PetLoader = () => (
+  <ContentLoader
+    speed={1}
+    width={500}
+    height={80}
+    viewBox="0 0 500 80"
+    backgroundColor="#dcdcdc"
+    foregroundColor="#9ca3af"
+  >
+    <Rect x="20" y="0" rx="50" ry="50" width="40" height="40" />
+    <Rect x="70" y="0" rx="4" ry="4" width="200" height="20" />
+    <Rect x="70" y="30" rx="3" ry="3" width="200" height="20" />
+  </ContentLoader>
+);

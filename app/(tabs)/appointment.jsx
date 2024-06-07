@@ -1,20 +1,21 @@
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   RefreshControl,
   Animated,
+  FlatList,
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { images } from "../../constants";
-import { icons } from "../../constants";
+import { icons, blurhash, images } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import MedicalCenterCard from "../../components/MedicalCenterCard";
 import SearchInput from "../../components/SearchInput";
-import { ClinicDummy } from "../../dummy/FakeData";
-import { FlashList } from "@shopify/flash-list";
+import { get_highest_rating_medical_centers } from "../../api/MedicalCenterApi";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Image } from "expo-image";
+import LottieView from "lottie-react-native";
 
 const Header_Max_Height = 144;
 const Header_Min_Height = 70;
@@ -158,14 +159,22 @@ const DynamicHeader = ({ value, isScrolled }) => {
 };
 
 const apointment = () => {
+  const [avatarUrl, setAvatarUrl] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState("none");
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
+  const [clinics, setClinics] = useState([]);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
   const onRefresh = async () => {
     setRefreshing(true);
     // fetch data
     setRefreshing(false);
+  };
+
+  const handleLoadMore = () => {
+    setPage((prevPage) => prevPage + 1);
   };
 
   useEffect(() => {
@@ -181,6 +190,42 @@ const apointment = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchClinics = async () => {
+      try {
+        get_highest_rating_medical_centers(page, 10).then((res) => {
+          if (res && res.status === 200) {
+            const newClinics = [...clinics, ...res.data.data];
+            const uniqueClinics = newClinics.reduce((unique, clinic) => {
+              if (
+                !unique.find(
+                  (item) => item.medical_center_id === clinic.medical_center_id
+                )
+              ) {
+                unique.push(clinic);
+              }
+              return unique;
+            }, []);
+            setClinics(uniqueClinics);
+            setIsLoading(false);
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching similar products:", error);
+      }
+    };
+    fetchClinics();
+  }, [page]);
+
+  useEffect(() => {
+    const getUserAvatar = async () => {
+      const userAvatar = await AsyncStorage.getItem("userAvatar");
+      setAvatarUrl(userAvatar);
+    };
+
+    getUserAvatar();
+  }, []);
+
   return (
     <SafeAreaView className="h-full flex-col">
       <SafeAreaView className="flex-row items-center w-[25%] justify-around absolute top-0 right-0 z-50 mr-10 mt-[14px]">
@@ -194,39 +239,74 @@ const apointment = () => {
             style={{ color: "#ef4444" }}
           />
         </View>
-        <Image source={images.avatar} className="w-9 h-9 rounded-full" />
-      </SafeAreaView>
-      <DynamicHeader value={scrollOffsetY} isScrolled={isScrolled} />
-      <FlashList
-        data={ClinicDummy}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <MedicalCenterCard
-            image={item.image}
-            name={item.name}
-            rating={item.rating}
-            distance={item.distance}
-            workingHours={item.workingHours}
-            telephone={item.telephone}
-            isHorizontal={false}
+        {avatarUrl && (
+          <Image
+            source={{ uri: avatarUrl }}
+            className="w-9 h-9 rounded-full"
+            transition={0}
+            placeholder={{ blurhash }}
           />
         )}
-        numColumns={2}
-        columnWrapperStyle={{
-          justifyContent: "space-around",
-        }}
-        estimatedItemSize={20}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollOffsetY } } }],
-          {
-            useNativeDriver: false,
+      </SafeAreaView>
+      <DynamicHeader value={scrollOffsetY} isScrolled={isScrolled} />
+      {isLoading ? (
+        <View className="w-full h-full flex-row items-start justify-center">
+          <LottieView
+            style={{ width: 130, height: 130, marginTop: 60 }}
+            source={require("../../assets/lottie/loading.json")}
+            autoPlay
+            loop
+            speed={1.5}
+          />
+        </View>
+      ) : clinics && clinics.length > 0 ? (
+        <FlatList
+          data={clinics}
+          keyExtractor={(item) => item.medical_center_id}
+          renderItem={({ item }) => (
+            <MedicalCenterCard
+              id={item.medical_center_id}
+              image={item.avatar}
+              name={item.name}
+              rating={item.rating}
+              distance={5}
+              workingHours={item.work_time}
+              telephone={item.phone}
+              description={item.description}
+              isHorizontal={false}
+            />
+          )}
+          numColumns={2}
+          columnWrapperStyle={{
+            justifyContent: "space-around",
+          }}
+          estimatedItemSize={20}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-        )}
-        showsVerticalScrollIndicator={false}
-      />
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollOffsetY } } }],
+            {
+              useNativeDriver: false,
+            }
+          )}
+          showsVerticalScrollIndicator={false}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          viewabilityConfig={{
+            itemVisiblePercentThreshold: 80,
+            minimumViewTime: 300,
+          }}
+        />
+      ) : (
+        <View className="w-full h-full flex-row items-start justify-center bg-[#f9f9f9]">
+          <Image
+            source={images.nodata}
+            className="w-full h-[400px]"
+            contentFit="contain"
+          />
+        </View>
+      )}
     </SafeAreaView>
   );
 };

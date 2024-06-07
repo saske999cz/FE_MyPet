@@ -13,19 +13,28 @@ const FormField = ({
   numberOfLines,
   height,
   secureText,
+  error,
+  numericKeyboard,
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const defaultHeight = 12;
   return (
     <View className={`space-y-2 ${otherStyles}`}>
-      <Text className={`font-semibold text-gray-50 ${titleStyles}`}>
-        {title}
-      </Text>
+      <View className="w-full h-fit flex-row items-center justify-between">
+        <Text className={`font-semibold text-gray-50 ${titleStyles}`}>
+          {title}
+        </Text>
+        {error && (
+          <Text className="text-red-500 text-[12px] ml-4">{error}</Text>
+        )}
+      </View>
       <View
         className={`w-full h-${
           height ? height : defaultHeight
-        } px-4 bg-white border-2 border-gray-300 rounded-md focus:border-[#3D1E14] items-center flex-row`}
+        } px-4 bg-white border-2 ${
+          error ? "border-red-500" : "border-gray-300"
+        } rounded-md focus:border-[#3D1E14] items-center flex-row`}
       >
         <TextInput
           value={value}
@@ -38,6 +47,7 @@ const FormField = ({
           multiline={multiline}
           numberOfLines={numberOfLines}
           autoCapitalize="none"
+          keyboardType={numericKeyboard ? "numeric" : "default"}
         />
         {secureText === true && (
           <TouchableOpacity
