@@ -77,7 +77,7 @@ const MyPet = () => {
 
   const uploadImage = (imageFile) => {
     return new Promise((resolve, reject) => {
-      const storageRef = ref(FIREBASE_STORAGE, "/pets/" + generateId());
+      const storageRef = ref(FIREBASE_STORAGE, /pets/ + generateId());
       const uploadTask = uploadBytesResumable(storageRef, imageFile);
 
       uploadTask.on(

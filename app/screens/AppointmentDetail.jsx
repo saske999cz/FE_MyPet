@@ -73,7 +73,7 @@ const AppointmentDetail = () => {
               </View>
               <View className="w-full h-5 flex-row items-center justify-start">
                 <Text className="text-[13px] ml-7 font-medium">ID: </Text>
-                <Text className="text-[13px] ml-2">{{ appointmentId }}</Text>
+                <Text className="text-[13px] ml-2">{appointmentId}</Text>
               </View>
               <View className="w-full h-5 flex-row items-center justify-start mt-1">
                 <Text className="text-[13px] ml-7 font-medium">Time:</Text>
