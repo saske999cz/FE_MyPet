@@ -1,16 +1,8 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Image,
-  ImageBackground,
-  RefreshControl,
-} from "react-native";
+import { View, Text, TouchableOpacity, RefreshControl } from "react-native";
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { icons } from "../../constants";
-import { images } from "../../constants";
+import { icons, blurhash } from "../../constants";
 import { router } from "expo-router";
 import {
   BottomSheetModal,
@@ -26,21 +18,42 @@ import {
   PetMedicalHistoryDummy,
 } from "../../dummy/FakeData";
 import { useLocalSearchParams } from "expo-router";
+import { get_pet_detail_by_id } from "../../api/PetApi";
+import { Image } from "expo-image";
 
 const MyPetDetail = () => {
-  const { id, name, age, gender } = useLocalSearchParams();
+  const { id, name, age, gender, breed, image } = useLocalSearchParams();
   const [refreshing, setRefreshing] = useState(false);
   const bottomSheetModalRef = useRef(null);
   const [vaccinationHistory, setVaccinationHistory] = useState([]);
   const [medicalHistory, setMedicalHistory] = useState([]);
+  const [fullVaccinationHistory, setFullVaccinationHistory] = useState([]);
+  const [fullMedicalHistory, setFullMedicalHistory] = useState([]);
   const [showFullVaccinationHistory, setShowFullVaccinationHistory] =
     useState(false);
   const [showFullMedicalHistory, setShowFullMedicalHistory] = useState(false);
+  const [imageUrl, setImageUrl] = useState(null);
 
   useEffect(() => {
-    setVaccinationHistory(PetVaccinationHistoryDummy.slice(0, 3));
-    setMedicalHistory(PetMedicalHistoryDummy.slice(0, 3));
+    const encodedPetAvatar = image.replace("/pets/", "/pets%2F");
+    setImageUrl(encodedPetAvatar);
+    const fetchPetDetail = async () => {
+      try {
+        get_pet_detail_by_id(id).then((res) => {
+          if (res && res.status === 200) {
+            setFullVaccinationHistory(res.data.data.vaccine_history);
+            setFullMedicalHistory(res.data.data.diagnosis_history);
+            setVaccinationHistory(res.data.data.vaccine_history.slice(0, 3));
+            setMedicalHistory(res.data.data.diagnosis_history.slice(0, 3));
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching pet detail:", error);
+      }
+    };
+    fetchPetDetail();
   }, []);
+
   const snapPoints = ["90%"];
 
   const onRefresh = async () => {
@@ -69,19 +82,19 @@ const MyPetDetail = () => {
   };
   const handleShowFullVaccinationHistory = () => {
     if (showFullVaccinationHistory) {
-      setVaccinationHistory(PetVaccinationHistoryDummy.slice(0, 3));
+      setVaccinationHistory(fullVaccinationHistory.slice(0, 3));
       setShowFullVaccinationHistory(false);
     } else {
-      setVaccinationHistory(PetVaccinationHistoryDummy);
+      setVaccinationHistory(fullVaccinationHistory);
       setShowFullVaccinationHistory(true);
     }
   };
   const handleShowFullMedicalHistory = () => {
     if (showFullMedicalHistory) {
-      setMedicalHistory(PetMedicalHistoryDummy.slice(0, 3));
+      setMedicalHistory(fullMedicalHistory.slice(0, 3));
       setShowFullMedicalHistory(false);
     } else {
-      setMedicalHistory(PetMedicalHistoryDummy);
+      setMedicalHistory(fullMedicalHistory);
       setShowFullMedicalHistory(true);
     }
   };
@@ -97,12 +110,22 @@ const MyPetDetail = () => {
     []
   );
 
-  const handleMedicalDetailNavigation = () => {
-    router.push("../screens/MedicalDetail");
+  const handleMedicalDetailNavigation = (id) => {
+    router.push({
+      pathname: "../screens/MedicalDetail",
+      params: {
+        id: id,
+      },
+    });
   };
 
-  const handleVaccinationDetailNavigation = () => {
-    router.push("../screens/VaccinationDetail");
+  const handleVaccinationDetailNavigation = (id) => {
+    router.push({
+      pathname: "../screens/VaccinationDetail",
+      params: {
+        id: id,
+      },
+    });
   };
 
   return (
@@ -126,11 +149,15 @@ const MyPetDetail = () => {
             <View className="w-full h-fit">
               <View className="w-full h-[1px] bg-gray-200"></View>
               <View className="w-full h-44">
-                <ImageBackground
-                  source={images.adopt2}
-                  className="w-full h-full object-center"
-                  resizeMode="cover"
-                />
+                {imageUrl && (
+                  <Image
+                    source={{ uri: imageUrl }}
+                    className="w-full h-full object-center"
+                    transition={200}
+                    placeholder={{ blurhash }}
+                    contentFit="cover"
+                  />
+                )}
                 <View className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 right-0 mr-2 mb-2 border-[1px] border-solid border-[#F2F2F2]">
                   <FontAwesomeIcon
                     icon={icons.faCamera}
@@ -178,11 +205,17 @@ const MyPetDetail = () => {
                   />
                   <View className="flex-row items-center justify-center ml-1">
                     <Text>Type of breed </Text>
-                    <Text className="font-semibold text-[15px]">Husky</Text>
+                    <Text className="font-semibold text-[15px]">{breed}</Text>
                   </View>
                 </View>
                 <View className="flex-row items-center justify-center mt-2">
+                  <FontAwesomeIcon
+                    icon={icons.faCakeCandles}
+                    size={15}
+                    style={{ color: "#000000" }}
+                  />
                   <View className="flex-row items-center justify-center ml-1">
+                    <Text>Age </Text>
                     <Text>{age}</Text>
                   </View>
                 </View>
@@ -211,33 +244,39 @@ const MyPetDetail = () => {
                           ? "rounded-b-lg"
                           : ""
                       }`}
-                      key={index}
-                      onPress={handleVaccinationDetailNavigation}
+                      key={item.vaccine_history_id}
+                      onPress={() =>
+                        handleVaccinationDetailNavigation(
+                          item.vaccine_history_id
+                        )
+                      }
                     >
                       <Text className="w-1/3 text-base text-center text-[13px]">
                         {item.vaccine}
                       </Text>
                       <Text className="w-1/3 text-base text-center text-[13px]">
-                        {item.date}
+                        {item.created_at}
                       </Text>
                       <Text className="w-1/3 text-base text-center text-[13px]">
-                        {item.notes}
+                        {item.note}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
-                <View className="w-full h-fit mt-4 mb-1 flex-row items-center justify-center">
-                  <TouchableOpacity
-                    className="w-40 h-10 rounded-md bg-gray-300 flex-row items-center justify-center"
-                    onPress={handleShowFullVaccinationHistory}
-                  >
-                    <Text className="font-semibold text-[13px]">
-                      {showFullVaccinationHistory === false
-                        ? "Show all"
-                        : "Show less"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                {vaccinationHistory.length > 1 && (
+                  <View className="w-full h-fit mt-4 mb-1 flex-row items-center justify-center">
+                    <TouchableOpacity
+                      className="w-40 h-10 rounded-md bg-gray-300 flex-row items-center justify-center"
+                      onPress={handleShowFullVaccinationHistory}
+                    >
+                      <Text className="font-semibold text-[13px]">
+                        {showFullVaccinationHistory === false
+                          ? "Show all"
+                          : "Show less"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
                 <View className="w-full h-[1px] bg-gray-300 mt-4 px-4"></View>
               </View>
               <View className="flex-col items-start justify-start mt-2 px-4">
@@ -267,11 +306,11 @@ const MyPetDetail = () => {
                             ? "rounded-b-lg"
                             : ""
                         }`}
-                        key={index}
-                        onPress={handleMedicalDetailNavigation}
+                        key={item.id}
+                        onPress={() => handleMedicalDetailNavigation(item.id)}
                       >
                         <Text className="w-1/4 text-base text-center text-[13px]">
-                          {item.date}
+                          {item.created_at}
                         </Text>
                         <Text className="w-1/4 text-base text-center text-[13px]">
                           {item.reason}
@@ -285,18 +324,20 @@ const MyPetDetail = () => {
                       </TouchableOpacity>
                     ))}
                   </View>
-                  <View className="w-full h-fit mt-4 mb-1 flex-row items-center justify-center">
-                    <TouchableOpacity
-                      className="w-40 h-10 rounded-md bg-gray-300 flex-row items-center justify-center"
-                      onPress={handleShowFullMedicalHistory}
-                    >
-                      <Text className="font-semibold text-[13px]">
-                        {showFullMedicalHistory === false
-                          ? "Show all"
-                          : "Show less"}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+                  {medicalHistory.length > 1 && (
+                    <View className="w-full h-fit mt-4 mb-1 flex-row items-center justify-center">
+                      <TouchableOpacity
+                        className="w-40 h-10 rounded-md bg-gray-300 flex-row items-center justify-center"
+                        onPress={handleShowFullMedicalHistory}
+                      >
+                        <Text className="font-semibold text-[13px]">
+                          {showFullMedicalHistory === false
+                            ? "Show all"
+                            : "Show less"}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
                 <View className="w-full h-[1px] bg-gray-300 mt-4 px-4"></View>
               </View>

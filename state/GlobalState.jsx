@@ -1,4 +1,5 @@
 import { createGlobalState } from "react-hooks-global-state";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const initialState = {
   toastStatus: false,

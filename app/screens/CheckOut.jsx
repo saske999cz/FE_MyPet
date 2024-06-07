@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  ActivityIndicator,
+  Modal,
 } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,8 +15,11 @@ import { icons } from "../../constants";
 import { images } from "../../constants";
 import { router } from "expo-router";
 import FormField from "../../components/FormField";
-import DropDownBox from "../../components/DropDownBox";
+import DropDownBox from "../../components/PetDropDownBox";
 import RadioButton from "../../components/RadioButton";
+import WebView from "react-native-webview";
+import queryString from "query-string";
+import PaypalApi from "../../api/payment/PaypalApi";
 
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
@@ -143,7 +148,7 @@ const PaymentScreen = ({ paymentMethod, activePaymentMethod }) => {
   );
 };
 
-const ConfirmScreen = () => {
+const ThankYouScreen = () => {
   const optional = " (Optional)";
   return (
     <View
@@ -180,7 +185,7 @@ const ScreenControler = ({
         />
       );
     case 3:
-      return <ConfirmScreen />;
+      return <ThankYouScreen />;
     default:
       return <BasicInfoScreen />;
   }
@@ -195,6 +200,9 @@ const CheckOut = () => {
     phone: "",
     email: "",
   });
+  const [isLoading, setLoading] = useState(false);
+  const [paypalUrl, setPaypalUrl] = useState(null);
+  const [paypalAccessToken, setPaypalAccessToken] = useState(null);
 
   const activePaymentMethod = (method) => {
     setPaymentMethod(method);
@@ -205,6 +213,10 @@ const CheckOut = () => {
 
   const handleNext = () => {
     if (currentStep === 3) return;
+    if (currentStep === 2 && paymentMethod === "PayPal") {
+      payWithPaypal();
+      return;
+    }
     setCurrentStep(currentStep + 1);
   };
 
@@ -213,87 +225,162 @@ const CheckOut = () => {
     setCurrentStep(currentStep - 1);
   };
 
-  const handleCreateAppointment = () => {};
+  const payWithPaypal = async () => {
+    setLoading(true);
+    try {
+      const token = await PaypalApi.generateToken();
+      const res = await PaypalApi.createOrder(token);
+      setPaypalAccessToken(token);
+      setLoading(false);
+      if (!!res?.links) {
+        const findUrl = res.links.find((data) => data?.rel == "approve");
+        setPaypalUrl(findUrl.href);
+      }
+    } catch (error) {
+      console.log("error", error);
+      setLoading(false);
+    }
+  };
+
+  const onUrlChange = (webviewState) => {
+    if (webviewState.url.includes("https://example.com/cancel")) {
+      clearPaypalState();
+      return;
+    }
+    if (webviewState.url.includes("https://example.com/return")) {
+      const urlValues = queryString.parseUrl(webviewState.url);
+      const { token } = urlValues.query;
+      if (!!token) {
+        paymentSucess(token);
+      }
+    }
+  };
+
+  const paymentSucess = async (id) => {
+    try {
+      const res = PaypalApi.capturePayment(id, paypalAccessToken);
+      alert("Payment sucessfull...!!!");
+      clearPaypalState();
+    } catch (error) {
+      console.log("error raised in payment capture", error);
+    }
+  };
+
+  const clearPaypalState = () => {
+    setPaypalUrl(null);
+    setPaypalAccessToken(null);
+  };
+
+  const handleGoHome = () => {
+    router.navigate("../(tabs)/home");
+  };
 
   return (
-    <SafeAreaView className="flex-1 items-center">
-      <View className="w-full h-12 flex-row items-center justify-center">
-        <TouchableOpacity
-          className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
-          onPress={handleBack}
-        >
-          <FontAwesomeIcon
-            icon={icons.faArrowLeftLong}
-            size={20}
-            style={{ color: "#f59e0b" }}
-          />
-        </TouchableOpacity>
-        <Text className="text-[16px] font-semibold">Check Out</Text>
-      </View>
-      <ScrollView className={`flex-1 w-full`}>
-        <View
-          className={`w-[${formWidth}] h-full items-center justify-center mb-8`}
-        >
-          <View className="w-[95%] h-fit bg-white rounded-lg mt-2 flex-col items-center justify-start">
-            <StepperBar steps={[1, 2, 3]} currentStep={currentStep} />
-            <ScreenControler
-              currentStep={currentStep}
-              activePaymentMethod={activePaymentMethod}
-              paymentMethod={paymentMethod}
+    <View className="w-full h-full">
+      <SafeAreaView className="flex-1 items-center">
+        <View className="w-full h-12 flex-row items-center justify-center">
+          <TouchableOpacity
+            className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
+            onPress={handleBack}
+          >
+            <FontAwesomeIcon
+              icon={icons.faArrowLeftLong}
+              size={20}
+              style={{ color: "#f59e0b" }}
             />
-            <View
-              className={`w-full h-16 flex-row items-center justify-center px-4 mb-2 ${
-                currentStep === 2 ? "mt-8" : "mt-2"
-              }`}
-            >
-              {currentStep !== 1 && (
-                <TouchableOpacity
-                  className="w-20 h-10 rounded-md border-[0.5px] border-solid border-gray-200 flex-row items-center justify-center mr-4"
-                  disabled={currentStep === 1 ? true : false}
-                  onPress={handlePrev}
-                >
-                  <FontAwesomeIcon
-                    icon={icons.faArrowLeftLong}
-                    size={12}
-                    style={{ color: "#f59e0b" }}
-                  />
-                  <Text className="text-[14px] font-semibold text-gray-500 ml-1">
-                    Prev
-                  </Text>
-                </TouchableOpacity>
-              )}
-              {currentStep !== 3 && (
-                <TouchableOpacity
-                  className="w-20 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-4"
-                  onPress={handleNext}
-                  disabled={currentStep === 3 ? true : false}
-                >
-                  <Text className="text-[14px] font-semibold text-white mr-1">
-                    Next
-                  </Text>
-                  <FontAwesomeIcon
-                    icon={icons.faArrowRightLong}
-                    size={12}
-                    style={{ color: "#ffffff" }}
-                  />
-                </TouchableOpacity>
-              )}
-              {currentStep === 3 && (
-                <TouchableOpacity
-                  className="w-28 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-4"
-                  onPress={handleCreateAppointment}
-                  disabled={currentStep !== 3 ? true : false}
-                >
-                  <Text className="text-[14px] font-semibold text-white">
-                    Proceed
-                  </Text>
-                </TouchableOpacity>
-              )}
+          </TouchableOpacity>
+          <Text className="text-[16px] font-semibold">Check Out</Text>
+        </View>
+        <ScrollView className={`flex-1 w-full`}>
+          <View
+            className={`w-[${formWidth}] h-full items-center justify-center mb-8`}
+          >
+            <View className="w-[95%] h-fit bg-white rounded-lg mt-2 flex-col items-center justify-start">
+              <StepperBar steps={[1, 2, 3]} currentStep={currentStep} />
+              <ScreenControler
+                currentStep={currentStep}
+                activePaymentMethod={activePaymentMethod}
+                paymentMethod={paymentMethod}
+              />
+              <View
+                className={`w-full h-16 flex-row items-center justify-center px-4 mb-2 ${
+                  currentStep === 2 ? "mt-8" : "mt-2"
+                }`}
+              >
+                {currentStep !== 1 && (
+                  <TouchableOpacity
+                    className="w-20 h-10 rounded-md border-[0.5px] border-solid border-gray-200 flex-row items-center justify-center mr-4"
+                    disabled={currentStep === 1 ? true : false}
+                    onPress={handlePrev}
+                  >
+                    <FontAwesomeIcon
+                      icon={icons.faArrowLeftLong}
+                      size={12}
+                      style={{ color: "#f59e0b" }}
+                    />
+                    <Text className="text-[14px] font-semibold text-gray-500 ml-1">
+                      Prev
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {currentStep !== 3 && (
+                  <TouchableOpacity
+                    className="w-20 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-4"
+                    onPress={handleNext}
+                    disabled={currentStep === 3 ? true : false}
+                  >
+                    <Text className="text-[14px] font-semibold text-white mr-1">
+                      Next
+                    </Text>
+                    <FontAwesomeIcon
+                      icon={icons.faArrowRightLong}
+                      size={12}
+                      style={{ color: "#ffffff" }}
+                    />
+                  </TouchableOpacity>
+                )}
+                {currentStep === 3 && (
+                  <TouchableOpacity
+                    className="w-28 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-4"
+                    onPress={handleGoHome}
+                    disabled={currentStep !== 3 ? true : false}
+                  >
+                    <Text className="text-[14px] font-semibold text-white">
+                      Go Home
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
           </View>
+        </ScrollView>
+        <Modal visible={!!paypalUrl}>
+          <TouchableOpacity
+            onPress={clearPaypalState}
+            className="w-12 h-5 flex-row items-center justify-center mt-12 mb-4 ml-2"
+          >
+            <FontAwesomeIcon
+              icon={icons.faCaretLeft}
+              size={15}
+              style={{ color: "#000000" }}
+            />
+            <Text className="text-[13px] ml-1">Back</Text>
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <WebView
+              source={{ uri: paypalUrl }}
+              onNavigationStateChange={onUrlChange}
+            />
+          </View>
+        </Modal>
+      </SafeAreaView>
+      {isLoading && (
+        <View className="absolute w-full h-full top-0 right-0 left-0 bottom-0 flex-row items-center justify-center">
+          <View className="w-full h-full bg-black opacity-50 absolute top-0"></View>
+          <ActivityIndicator size="large" color="#ffffff" className="z-3" />
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      )}
+    </View>
   );
 };
 

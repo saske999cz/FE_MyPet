@@ -1,25 +1,24 @@
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   RefreshControl,
   Animated,
+  FlatList,
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { images } from "../../constants";
-import { icons } from "../../constants";
+import { icons, images, blurhash } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { ItemDummy } from "../../dummy/FakeData";
 import ItemCard from "../../components/ItemCard";
 import SearchInput from "../../components/SearchInput";
 import Toast from "react-native-toast-message";
 import { setGlobalState, useGlobalState } from "../../state/GlobalState";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { FlashList } from "@shopify/flash-list";
 import { get_best_selling_products } from "../../api/MarketApi";
+import { Image } from "expo-image";
+import LottieView from "lottie-react-native";
 
 const Header_Max_Height = 230;
 const Header_Min_Height = 70;
@@ -32,6 +31,8 @@ const DynamicHeader = ({
   cartLength,
   isScrolled,
 }) => {
+  const [avatarUrl, setAvatarUrl] = useState(null);
+
   const handleCartPress = () => {
     router.push("../screens/Cart");
   };
@@ -131,6 +132,14 @@ const DynamicHeader = ({
     ],
   };
 
+  useEffect(() => {
+    const getUserAvatar = async () => {
+      const userAvatar = await AsyncStorage.getItem("userAvatar");
+      setAvatarUrl(userAvatar);
+    };
+    getUserAvatar();
+  }, []);
+
   return (
     <Animated.View
       style={{
@@ -171,7 +180,14 @@ const DynamicHeader = ({
                 style={{ color: "#000000" }}
               />
             </TouchableOpacity>
-            <Image source={images.avatar} className="w-9 h-9 rounded-full" />
+            {avatarUrl && (
+              <Image
+                source={{ uri: avatarUrl }}
+                className="w-9 h-9 rounded-full"
+                transition={0}
+                placeholder={{ blurhash }}
+              />
+            )}
           </Animated.View>
         </View>
         <Animated.View
@@ -219,57 +235,57 @@ const DynamicHeader = ({
         <View className="flex-row items-center justify-start w-full">
           <TouchableOpacity
             className={`w-24 h-10 rounded-full flex-row items-center justify-center ${
-              activeCategory === "dogs" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
+              activeCategory === "dog" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
             }`}
-            onPress={() => handlePressCategory("dogs")}
+            onPress={() => handlePressCategory("dog")}
           >
             <View
               className={`w-9 h-9 rounded-full flex-row items-center justify-center -ml-2 ${
-                activeCategory === "dogs" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
+                activeCategory === "dog" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
               }`}
             >
               <Image
                 source={images.dog}
                 className="w-5 h-5"
-                resizeMode="contain"
+                contentFit="contain"
               />
             </View>
             <Text className={`text-[13px] ml-2`}>Dogs</Text>
           </TouchableOpacity>
           <TouchableOpacity
             className={`w-24 h-10 rounded-full flex-row items-center justify-center ml-9 ${
-              activeCategory === "cats" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
+              activeCategory === "cat" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
             }`}
-            onPress={() => handlePressCategory("cats")}
+            onPress={() => handlePressCategory("cat")}
           >
             <View
               className={`w-9 h-9 rounded-full flex-row items-center justify-center -ml-2 ${
-                activeCategory === "cats" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
+                activeCategory === "cat" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
               }`}
             >
               <Image
                 source={images.cat}
                 className="w-5 h-5"
-                resizeMode="contain"
+                contentFit="contain"
               />
             </View>
             <Text className={`text-[13px] ml-2`}>Cats</Text>
           </TouchableOpacity>
           <TouchableOpacity
             className={`w-24 h-10 rounded-full flex-row items-center justify-center ml-9 ${
-              activeCategory === "birds" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
+              activeCategory === "bird" ? "bg-[#fed7aa]" : "bg-[#e5e7eb]"
             }`}
-            onPress={() => handlePressCategory("birds")}
+            onPress={() => handlePressCategory("bird")}
           >
             <View
               className={`w-9 h-9 rounded-full flex-row items-center justify-center -ml-2 ${
-                activeCategory === "birds" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
+                activeCategory === "bird" ? "bg-[#fb923c]" : "bg-[#d1d5db]"
               }`}
             >
               <Image
                 source={images.bird}
                 className="w-5 h-5"
-                resizeMode="contain"
+                contentFit="contain"
               />
             </View>
             <Text className={`text-[13px] ml-2`}>Birds</Text>
@@ -283,13 +299,19 @@ const DynamicHeader = ({
 const market = () => {
   const [cartLength, setCartLength] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [products, setProducts] = useState(null);
+  const [products, setProducts] = useState([]);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [activeCategory, setActiveCategory] = useState("none");
+  const [page, setPage] = useState(1);
+  const [activeCategory, setActiveCategory] = useState("");
   const addedCartItem = useGlobalState("addedCartItem");
   const toastStatus = useGlobalState("toastStatus");
   const cartStatus = useGlobalState("cartStatus");
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
+  const [isLoading, setIsLoading] = useState(true);
+
+  const handleLoadMore = () => {
+    setPage((prevPage) => prevPage + 1);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -333,6 +355,10 @@ const market = () => {
   }, [toastStatus[0]]);
 
   const handlePressCategory = (category) => {
+    if (category === activeCategory) {
+      setActiveCategory("");
+      return;
+    }
     setActiveCategory(category);
   };
 
@@ -356,18 +382,33 @@ const market = () => {
   }, [scrollOffsetY]);
 
   useEffect(() => {
-    get_best_selling_products(1, 10)
+    get_best_selling_products(page, 10, activeCategory)
       .then((res) => {
-        if (res.status === 200) {
-          setProducts(res.data.data);
+        if (res && res.status === 200 && res.data.data.length > 0) {
+          const newProducts = [...products, ...res.data.data];
+          const uniqueProducts = newProducts.reduce((unique, product) => {
+            if (!unique.find((item) => item.id === product.id)) {
+              unique.push(product);
+            }
+            return unique;
+          }, []);
+          setProducts(uniqueProducts);
+          setIsLoading(false);
         } else {
-          alert(res.data.status);
+          setProducts([]);
+          setIsLoading(false);
         }
       })
       .catch((err) => {
         alert(err.message);
       });
-  }, []);
+  }, [page, activeCategory]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    setProducts([]);
+    setPage(1);
+  }, [activeCategory]);
 
   return (
     <SafeAreaView className="w-full h-full flex-col">
@@ -378,41 +419,66 @@ const market = () => {
         cartLength={cartLength}
         isScrolled={isScrolled}
       />
-      <FlashList
-        scrollEventThrottle={5}
-        data={products}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View className="w-[96%] h-fit ml-1">
-            <ItemCard
-              id={item.id}
-              title={item.name}
-              price={item.price}
-              image={item.image}
-              rating={item.rating}
-              soldUnits={item.sold_quantity}
-              shop={item.shop}
-              isHorizontal={false}
-            />
-          </View>
-        )}
-        numColumns={2}
-        columnWrapperStyle={{
-          justifyContent: "space-around",
-        }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        estimatedItemSize={50}
-        showsVerticalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollOffsetY } } }],
-          {
-            useNativeDriver: false,
+      {isLoading ? (
+        <View className="w-full h-full flex-row items-start justify-center">
+          <LottieView
+            style={{ width: 130, height: 130, marginTop: 60 }}
+            source={require("../../assets/lottie/loading.json")}
+            autoPlay
+            loop
+            speed={1.5}
+          />
+        </View>
+      ) : products && products.length > 0 ? (
+        <FlatList
+          scrollEventThrottle={2}
+          data={products}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View className="w-[47%] h-fit">
+              <ItemCard
+                id={item.id}
+                title={item.name}
+                price={item.price}
+                image={item.image}
+                rating={item.rating}
+                soldUnits={item.sold_quantity}
+                shop={item.shop}
+                isHorizontal={false}
+              />
+            </View>
+          )}
+          numColumns={2}
+          columnWrapperStyle={{
+            justifyContent: "space-around",
+          }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
-        )}
-      />
-
+          estimatedItemSize={500}
+          showsVerticalScrollIndicator={false}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollOffsetY } } }],
+            {
+              useNativeDriver: false,
+            }
+          )}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          viewabilityConfig={{
+            itemVisiblePercentThreshold: 80,
+            minimumViewTime: 300,
+          }}
+        />
+      ) : (
+        <View className="w-full h-full flex-row items-start justify-center bg-[#f9f9f9]">
+          <Image
+            source={images.nodata}
+            className="w-full h-[400px]"
+            contentFit="contain"
+          />
+        </View>
+      )}
       <View style={{ position: "absolute", top: 20, left: 20, right: 20 }}>
         <Toast />
       </View>

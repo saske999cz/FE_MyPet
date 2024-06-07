@@ -1,11 +1,14 @@
-import { View, Text, Image, TouchableOpacity } from "react-native";
-import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import React, { useState, useEffect, useMemo, memo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { icons } from "../constants";
+import { icons, blurhash } from "../constants";
 import { router } from "expo-router";
 import { FIREBASE_STORAGE } from "../firebaseConfig";
 import { getDownloadURL, ref, listAll } from "firebase/storage";
 import { CustomLoader } from "./CustomLoader";
+import { Image } from "expo-image";
+
+const imageUrlCache = {};
 
 const ItemCard = ({
   id,
@@ -18,28 +21,45 @@ const ItemCard = ({
   isHorizontal,
   description,
 }) => {
-  const [imageUrl, setImageUrl] = useState(image);
-  const [isLoading, setIsLoading] = useState(true);
+  const [imageUrl, setImageUrl] = useState(imageUrlCache[image] || null);
+  const [isLoading, setIsLoading] = useState(!imageUrlCache[image]);
 
   useEffect(() => {
+    let isMounted = true;
     const fetchImage = async () => {
       try {
         const imageFolderRef = ref(FIREBASE_STORAGE, image);
         const res = await listAll(imageFolderRef);
         if (res.items.length > 0) {
           const url = await getDownloadURL(res.items[0]);
-          setImageUrl(url);
+          if (isMounted) {
+            imageUrlCache[image] = url; // Update cache
+            setImageUrl(url);
+            setIsLoading(false);
+          }
         }
       } catch (error) {
         console.error("Error fetching image:", error);
-      } finally {
-        setTimeout(() => {
+        if (isMounted) {
           setIsLoading(false);
-        }, 300);
+        }
       }
     };
 
-    fetchImage();
+    // Check cache first
+    if (imageUrlCache[image]) {
+      setImageUrl(imageUrlCache[image]);
+      setIsLoading(false);
+    } else {
+      // Reset state and fetch image
+      setImageUrl(null);
+      setIsLoading(true);
+      fetchImage();
+    }
+
+    return () => {
+      isMounted = false;
+    };
   }, [image]);
 
   const handlePress = () => {
@@ -67,11 +87,15 @@ const ItemCard = ({
         <CustomLoader />
       ) : (
         <View className="w-full h-full flex-col items-center justify-start bg-white rounded-lg">
-          <Image
-            source={{ uri: imageUrl }}
-            className="w-full h-32 rounded-t-lg"
-            resizeMode="cover"
-          />
+          {imageUrl && (
+            <Image
+              source={{ uri: imageUrl }}
+              className="w-full h-32 rounded-t-lg"
+              placeholder={{ blurhash }}
+              contentFit="cover"
+              transition={200}
+            />
+          )}
           <View className="w-full flex-col items-start justify-center mt-2 px-2 max-h-20">
             <View className="w-full h-9 mb-1 flex-row items-center justify-start mt-2 ">
               <Text
@@ -122,4 +146,4 @@ const ItemCard = ({
   );
 };
 
-export default ItemCard;
+export default memo(ItemCard);

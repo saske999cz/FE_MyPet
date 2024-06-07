@@ -1,17 +1,47 @@
-import { View, Text, Image, TouchableOpacity } from "react-native";
-import React, { useState } from "react";
-import { FlashList } from "@shopify/flash-list";
+import { View, Text, Image, TouchableOpacity, FlatList } from "react-native";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
 import { router } from "expo-router";
 import { ProductReviewDummy } from "../../dummy/FakeData";
 import Review from "../../components/Review";
+import { useLocalSearchParams } from "expo-router";
+import { get_product_reviews } from "../../api/MarketApi";
 
 const AllReviews = () => {
-  const [reviews, setReviews] = useState(ProductReviewDummy);
+  const { productId, totalReviews } = useLocalSearchParams();
+  const [reviews, setReviews] = useState([]);
+  const [page, setPage] = useState(1);
+
   const handleBack = () => {
     router.back();
+  };
+
+  useEffect(() => {
+    const getReviews = async () => {
+      try {
+        get_product_reviews(productId, page, 10).then((res) => {
+          if (res && res.status === 200) {
+            const newReviews = [...reviews, ...res.data.data];
+            const uniqueReviews = newReviews.reduce((unique, review) => {
+              if (!unique.find((item) => item.rating_id === review.rating_id)) {
+                unique.push(review);
+              }
+              return unique;
+            }, []);
+            setReviews(uniqueReviews);
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching similar products:", error);
+      }
+    };
+    getReviews();
+  }, [page]);
+
+  const handleLoadMore = () => {
+    setPage((prevPage) => prevPage + 1);
   };
 
   return (
@@ -27,21 +57,27 @@ const AllReviews = () => {
             style={{ color: "#f59e0b" }}
           />
         </TouchableOpacity>
-        <Text className="font-bold text-[16px]">{`Reviews(${reviews.length})`}</Text>
-      </View>
-      <FlashList
-        data={ProductReviewDummy}
-        renderItem={({ item }) => (
-          <Review
-            avatar={item.userAvatar}
-            username={item.userName}
-            rating={item.rating}
-            review={item.review}
-          />
+        {reviews && (
+          <Text className="font-bold text-[16px]">{`Reviews(${totalReviews})`}</Text>
         )}
-        keyExtractor={(item) => item.id}
-        estimatedItemSize={30}
-      />
+      </View>
+      {reviews && (
+        <FlatList
+          data={reviews}
+          renderItem={({ item }) => (
+            <Review
+              avatar={item.customer_avatar}
+              username={item.customer_username}
+              rating={item.rating_score}
+              review={item.description}
+            />
+          )}
+          keyExtractor={(item) => item.rating_id}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          scrollEventThrottle={2}
+        />
+      )}
     </SafeAreaView>
   );
 };

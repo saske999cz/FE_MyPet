@@ -13,6 +13,7 @@ export default function App() {
   const isFirstLaunch = async () => {
     const hasLaunched = await AsyncStorage.getItem("hasLaunched");
     if (hasLaunched === null) {
+      await AsyncStorage.setItem("hasLaunched", "true");
       setHasLaunched(false);
     }
   };

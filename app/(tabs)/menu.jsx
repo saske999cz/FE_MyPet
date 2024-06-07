@@ -1,18 +1,22 @@
-import { View, Text, TouchableOpacity, Image } from "react-native";
-import React from "react";
+import { View, Text, TouchableOpacity } from "react-native";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { images } from "../../constants";
+import { images, icons, blurhash } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { icons } from "../../constants";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Image } from "expo-image";
 
 const menu = () => {
+  const [avatarUrl, setAvatarUrl] = useState(null);
   const handlePressMyProfile = () => {
     router.push("../screens/MyProfile");
   };
   const handleLogOut = () => {
     AsyncStorage.removeItem("token");
+    AsyncStorage.removeItem("userName");
+    AsyncStorage.removeItem("userAvatar");
+    AsyncStorage.removeItem("userId");
     router.replace("/sign-in");
   };
   const handlePressMyPet = () => {
@@ -25,13 +29,23 @@ const menu = () => {
   const handlePressMyOrder = () => {
     router.push("../screens/MyOrder");
   };
+
+  useEffect(() => {
+    const getUserAvatar = async () => {
+      const userAvatar = await AsyncStorage.getItem("userAvatar");
+      setAvatarUrl(userAvatar);
+    };
+
+    getUserAvatar();
+  }, []);
+
   return (
     <SafeAreaView className="h-full flex-col items-center justify-start">
       <View className="flex-row w-full items-center justify-between px-4">
         <Image
           source={images.logoBlack}
           className="w-32 h-16 -ml-4"
-          resizeMode="contain"
+          contentFit="contain"
         />
         <View className="flex-row items-center w-[45%] justify-end">
           <Text className="text-[17px] font-semibold mr-1 mt-1">Menu</Text>
@@ -43,7 +57,14 @@ const menu = () => {
           onPress={handlePressMyProfile}
         >
           <View className="w-16 h-16 flex-row items-center justify-center">
-            <Image source={images.avatar} className="w-9 h-9 rounded-full" />
+            {avatarUrl && (
+              <Image
+                source={{ uri: avatarUrl }}
+                className="w-9 h-9 rounded-full"
+                transition={200}
+                placeholder={{ blurhash }}
+              />
+            )}
           </View>
           <Text className="text-[14px] font-semibold">My Profile</Text>
         </TouchableOpacity>

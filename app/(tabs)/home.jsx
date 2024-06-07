@@ -1,14 +1,7 @@
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  RefreshControl,
-} from "react-native";
-import React, { useState, useRef, useCallback } from "react";
+import { View, Text, TouchableOpacity, RefreshControl } from "react-native";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { images } from "../../constants";
-import { icons } from "../../constants";
+import { icons, blurhash, images } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import MinimalPost from "../../components/MinimalPost";
 import { ExperimentData } from "../../dummy/FakeData";
@@ -27,8 +20,12 @@ import FormField from "../../components/FormField";
 import * as ImagePicker from "expo-image-picker";
 import DynamicImageGrid from "../../components/DynamicImageGrid";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FIREBASE_STORAGE } from "../../firebaseConfig";
+import { getDownloadURL, ref } from "firebase/storage";
+import { Image } from "expo-image";
 
 const Home = () => {
+  const [avatarUrl, setAvatarUrl] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const bottomSheetModalRef = useRef(null);
   const snapPoints = ["90%"];
@@ -78,6 +75,18 @@ const Home = () => {
     []
   );
 
+  useEffect(() => {
+    const getUserAvatar = async () => {
+      const userAvatar = await AsyncStorage.getItem("userAvatar");
+      const avatarRef = ref(FIREBASE_STORAGE, userAvatar);
+      const url = await getDownloadURL(avatarRef);
+      setAvatarUrl(url);
+      AsyncStorage.setItem("userAvatar", url);
+    };
+
+    getUserAvatar();
+  }, []);
+
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
@@ -86,7 +95,7 @@ const Home = () => {
             <Image
               source={images.logoBlack}
               className="w-32 h-16 -ml-4 mt-1"
-              resizeMode="contain"
+              contentFit="contain"
             />
             <View className="flex-row items-center w-[25%] justify-around -mr-1">
               <TouchableOpacity
@@ -99,7 +108,13 @@ const Home = () => {
                   style={{ color: "#000000" }}
                 />
               </TouchableOpacity>
-              <Image source={images.avatar} className="w-9 h-9 rounded-full" />
+
+              <Image
+                source={{ uri: avatarUrl }}
+                className="w-9 h-9 rounded-full"
+                transition={0}
+                placeholder={{ blurhash }}
+              />
             </View>
           </View>
           <FlashList

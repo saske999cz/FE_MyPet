@@ -1,9 +1,9 @@
-import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { icons } from "../../constants";
+import { icons, blurhash } from "../../constants";
 import { router, useLocalSearchParams } from "expo-router";
 import {
   ProductImages,
@@ -23,6 +23,7 @@ import { FIREBASE_STORAGE } from "../../firebaseConfig";
 import { getDownloadURL, ref, listAll } from "firebase/storage";
 import { ProductDetailLoader } from "../../components/CustomLoader";
 import Review from "../../components/Review";
+import { Image } from "expo-image";
 
 const ProductDetail = () => {
   const { id, shopName, shopAddress, rating, shopAvatar, shopImage } =
@@ -37,7 +38,8 @@ const ProductDetail = () => {
   const [productCategory, setProductCategory] = useState(null);
   const [shopImageUrl, setShopImageUrl] = useState(null);
   const [flags, setFlags] = useState([]);
-  const [reviews, setReviews] = useState(ProductReviewDummy);
+  const [reviews, setReviews] = useState(null);
+  const [totalReviews, setTotalReviews] = useState(0);
   const handleBack = () => {
     router.back();
   };
@@ -120,7 +122,22 @@ const ProductDetail = () => {
   };
 
   const handleReviewPress = () => {
-    router.push("../screens/AllReviews");
+    router.push({
+      pathname: "../screens/AllReviews",
+      params: {
+        productId: productDetail.id,
+        totalReviews: totalReviews,
+      },
+    });
+  };
+
+  const handleSimilarProductsPress = () => {
+    router.push({
+      pathname: "../screens/SimilarProducts",
+      params: {
+        categoryId: productDetail.product_category_id,
+      },
+    });
   };
 
   useEffect(() => {
@@ -164,20 +181,22 @@ const ProductDetail = () => {
   useEffect(() => {
     const fetchImage = async () => {
       try {
-        const imageFolderRef = ref(FIREBASE_STORAGE, folderUrl);
-        const res = await listAll(imageFolderRef);
-        if (res.items.length > 0) {
-          const url = await getDownloadURL(res.items[0]);
-          setMainImage(url);
-          Promise.all(res.items.map((item) => getDownloadURL(item)))
-            .then((urls) => {
-              setImageUrls(urls);
-              setFlags((prev) => [...prev, true]);
-            })
-            .catch((error) => console.error(error));
+        if (folderUrl) {
+          const imageFolderRef = ref(FIREBASE_STORAGE, folderUrl);
+          const res = await listAll(imageFolderRef);
+          if (res.items.length > 0) {
+            const url = await getDownloadURL(res.items[0]);
+            setMainImage(url);
+            Promise.all(res.items.map((item) => getDownloadURL(item)))
+              .then((urls) => {
+                setImageUrls(urls);
+                setFlags((prev) => [...prev, true]);
+              })
+              .catch((error) => console.error(error));
+          }
         }
       } catch (error) {
-        console.log("Error fetching product detail image:", error);
+        console.error("Error fetching product detail image:", error);
       }
     };
 
@@ -202,29 +221,30 @@ const ProductDetail = () => {
     fetchSimilarProducts();
   }, [productCategory]);
 
-  // useEffect(() => {
-  //   const fetchReviews = async () => {
-  //     try {
-  //       get_product_reviews(productDetail.id, productDetail.shop_id, 1, 5).then(
-  //         (res) => {
-  //           if (res && res.status === 200) {
-  //             setReviews(res.data.data);
-  //             setFlags((prev) => [...prev, true]);
-  //           }
-  //         }
-  //       );
-  //     } catch (error) {
-  //       console.error("Error fetching similar products:", error);
-  //     }
-  //   };
-  //   fetchSimilarProducts();
-  // }, [productCategory]);
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        if (productDetail) {
+          get_product_reviews(productDetail.id, 1, 5).then((res) => {
+            if (res && res.status === 200) {
+              setReviews(res.data.data);
+              setTotalReviews(res.data.total_ratings);
+              setFlags((prev) => [...prev, true]);
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+    };
+    fetchReviews();
+  }, [productDetail]);
 
   useEffect(() => {
-    if (flags.length === 4 && flags.every((flag) => flag === true)) {
+    if (flags.length === 5 && flags.every((flag) => flag === true)) {
       setTimeout(() => {
         setIsLoading(false);
-      }, 400);
+      }, 300);
     }
   }, [flags]);
 
@@ -253,8 +273,9 @@ const ProductDetail = () => {
             <Image
               source={{ uri: mainImage }}
               className="w-full h-60"
-              resizeMode="contain"
+              contentFit="contain"
               style={{ aspectRatio: 16 / 9 }}
+              placeholder={{ blurhash }}
             />
             <View className="w-10 h-5 flex-row items-center justify-center bg-white rounded-full border-[0.5px] border-solid border-gray-300 mt-3 mb-2">
               <Text className="text-[12px] text-gray-700">
@@ -274,6 +295,7 @@ const ProductDetail = () => {
                       <Image
                         source={{ uri: item }}
                         className="w-full h-full rounded-[3px]"
+                        placeholder={{ blurhash }}
                       />
                     </TouchableOpacity>
                   )}
@@ -366,11 +388,37 @@ const ProductDetail = () => {
               </TouchableOpacity>
             </View>
             <View className="w-full h-[4px] bg-gray-300 mt-5"></View>
-            <View className="w-full h-fit">
-              <View className="w-full h-12 mt-2 border-b-[1px] border-solid border-gray-300 flex-row items-center justify-between px-4">
-                <Text className="font-semibold text-[14px]">{`Reviews (${reviews.length})`}</Text>
+            {reviews && (
+              <View className="w-full h-fit">
+                <View className="w-full h-12 mt-2 border-b-[1px] border-solid border-gray-300 flex-row items-center justify-between px-4">
+                  <Text className="font-semibold text-[14px]">{`Reviews (${totalReviews})`}</Text>
+                  <TouchableOpacity
+                    className="w-16 h-10 flex-row items-center justify-center"
+                    onPress={handleReviewPress}
+                  >
+                    <Text className="text-[14px] text-[#f59e0b] mr-1">
+                      See all
+                    </Text>
+                    <FontAwesomeIcon
+                      icon={icons.faChevronRight}
+                      size={12}
+                      style={{ color: "#f59e0b" }}
+                    />
+                  </TouchableOpacity>
+                </View>
+                <View className="w-full h-fit">
+                  {reviews.slice(0, 2).map((review) => (
+                    <Review
+                      key={review.rating_id}
+                      avatar={review.customer_avatar}
+                      username={review.customer_username}
+                      rating={review.rating_score}
+                      review={review.description}
+                    />
+                  ))}
+                </View>
                 <TouchableOpacity
-                  className="w-16 h-10 flex-row items-center justify-center"
+                  className="w-full h-10 flex-row items-center justify-center mt-1"
                   onPress={handleReviewPress}
                 >
                   <Text className="text-[14px] text-[#f59e0b] mr-1">
@@ -383,36 +431,17 @@ const ProductDetail = () => {
                   />
                 </TouchableOpacity>
               </View>
-              <View className="w-full h-fit">
-                {reviews.slice(0, 2).map((review) => (
-                  <Review
-                    key={review.id}
-                    avatar={review.userAvatar}
-                    review={review.review}
-                    rating={review.rating}
-                    username={review.userName}
-                  />
-                ))}
-              </View>
-              <TouchableOpacity
-                className="w-full h-10 flex-row items-center justify-center mt-1"
-                onPress={handleReviewPress}
-              >
-                <Text className="text-[14px] text-[#f59e0b] mr-1">See all</Text>
-                <FontAwesomeIcon
-                  icon={icons.faChevronRight}
-                  size={12}
-                  style={{ color: "#f59e0b" }}
-                />
-              </TouchableOpacity>
-            </View>
+            )}
             <View className="w-full h-[4px] bg-gray-300 mt-2"></View>
             <View className="w-full px-4 h-fit">
               <View className="w-full flex-row items-center justify-between">
                 <Text className="font-semibold text-[14px] mb-2 mt-4">
                   Similar Products
                 </Text>
-                <TouchableOpacity className="flex-row items-center justify-center mt-1">
+                <TouchableOpacity
+                  className="flex-row items-center justify-center mt-1"
+                  onPress={handleSimilarProductsPress}
+                >
                   <Text className="text-[14px] text-[#f59e0b]">(See more)</Text>
                 </TouchableOpacity>
               </View>

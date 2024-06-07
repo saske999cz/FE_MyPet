@@ -5,6 +5,7 @@ import {
   Image,
   ImageBackground,
   RefreshControl,
+  FlatList,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,16 +13,12 @@ import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
 import { images } from "../../constants";
 import { router } from "expo-router";
-import { ItemDummy } from "../../dummy/FakeData";
 import ItemCard from "../../components/ItemCard";
-import { FlashList } from "@shopify/flash-list";
-import { CategoryDummy } from "../../dummy/FakeData";
 import { useLocalSearchParams } from "expo-router";
 import {
   get_best_selling_products_by_shop,
   get_all_category_type_with_amount_of_products_by_shop,
 } from "../../api/MarketApi";
-import { set } from "date-fns";
 
 const Shop = () => {
   const {
@@ -43,6 +40,7 @@ const Shop = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [categories, setCategories] = useState(null);
   const [shopImage, setShopImage] = useState(null);
+  const [page, setPage] = useState(1);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -50,6 +48,10 @@ const Shop = () => {
   };
   const handleBack = () => {
     router.back();
+  };
+
+  const handleLoadMore = () => {
+    setPage((prevPage) => prevPage + 1);
   };
 
   const generateRandomId = () => {
@@ -67,18 +69,33 @@ const Shop = () => {
   };
 
   useEffect(() => {
-    const encodedShopAvatar = shopAvatar.replace("/shop/", "%2Fshop%2F");
-    setShopImage(encodedShopAvatar);
     const fetchProducts = async () => {
       try {
-        get_best_selling_products_by_shop(shopId)
-          .then((res) => setProducts(res.data.data))
+        get_best_selling_products_by_shop(shopId, page, 10)
+          .then((res) => {
+            if (res && res.status === 200) {
+              const newProducts = [...products, ...res.data.data];
+              const uniqueProducts = newProducts.reduce((unique, product) => {
+                if (!unique.find((item) => item.id === product.id)) {
+                  unique.push(product);
+                }
+                return unique;
+              }, []);
+              setProducts(uniqueProducts);
+            }
+          })
           .catch((error) => console.error("Error fetching products:", error));
       } catch (error) {
         console.error("Error fetching products:", error);
       }
     };
 
+    fetchProducts();
+  }, [page]);
+
+  useEffect(() => {
+    const encodedShopAvatar = shopAvatar.replace("/shop/", "%2Fshop%2F");
+    setShopImage(encodedShopAvatar);
     const fetchCategories = async () => {
       try {
         get_all_category_type_with_amount_of_products_by_shop(shopId)
@@ -89,7 +106,6 @@ const Shop = () => {
       }
     };
     fetchCategories();
-    fetchProducts();
   }, []);
 
   return (
@@ -202,19 +218,19 @@ const Shop = () => {
         </View>
         <View className="w-full h-full flex-row items-start justify-start mt-2 pb-64">
           {activeTab === "products" && products && products.length > 0 ? (
-            <FlashList
-              scrollEventThrottle={5}
+            <FlatList
+              scrollEventThrottle={2}
               data={products}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <View className="w-[96%] h-fit ml-1">
+                <View className="w-[47%] h-fit">
                   <ItemCard
                     id={item.id}
                     title={item.name}
                     price={item.price}
                     image={item.image}
                     rating={item.rating}
-                    soldUnits={item.soldUnits}
+                    soldUnits={item.sold_quantity}
                     shop={item.shop}
                     isHorizontal={false}
                   />
@@ -227,8 +243,14 @@ const Shop = () => {
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
-              estimatedItemSize={40}
+              estimatedItemSize={500}
               showsVerticalScrollIndicator={false}
+              onEndReached={handleLoadMore}
+              onEndReachedThreshold={0.5}
+              viewabilityConfig={{
+                itemVisiblePercentThreshold: 80,
+                minimumViewTime: 300,
+              }}
             />
           ) : activeTab === "category" ? (
             <View className="w-full h-fit">

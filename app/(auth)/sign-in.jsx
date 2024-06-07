@@ -4,10 +4,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { images } from "../../constants";
 import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
-import { Link, Redirect, router } from "expo-router";
+import { Link, router } from "expo-router";
 import { user_login } from "../../api/AuthApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { set } from "date-fns";
+import ApiManager from "../../api/ApiManager";
 
 const SignIn = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -35,16 +35,22 @@ const SignIn = () => {
     setIsSubmitting(true);
     user_login({ email: form.email, password: form.password })
       .then((res) => {
-        if (res.status === 200) {
+        if (res && res.status === 200) {
           AsyncStorage.setItem("token", res.data.access_token);
+          AsyncStorage.setItem("userName", res.data.user.username);
+          AsyncStorage.setItem("userAvatar", res.data.user.avatar);
+          AsyncStorage.setItem("userId", res.data.user.id.toString());
+          ApiManager.defaults.headers.common[
+            "Authorization"
+          ] = `Bearer ${res.data.access_token}`;
           setIsSubmitting(false);
-          router.replace("/home");
+          router.replace("../(tabs)/home");
         } else {
           alert(res.data.message);
         }
       })
       .catch((err) => {
-        alert("An error occurred, please try again");
+        alert("An error occurred, please try again", err);
         setIsSubmitting(false);
       });
   };
