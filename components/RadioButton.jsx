@@ -1,5 +1,6 @@
-import { View, Text, TouchableOpacity, Image } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import React from "react";
+import { Image } from "expo-image";
 
 const RadioButton = ({
   active,
@@ -27,7 +28,7 @@ const RadioButton = ({
         ></View>
       </View>
       {image && (
-        <Image source={image} className="w-12 h-12 ml-2" resizeMode="contain" />
+        <Image source={image} className="w-12 h-12 ml-2" contentFit="contain" />
       )}
       <View className="w-4/5 h-full flex-col items-center justify-center ml-2">
         <Text className={`w-full ${titleStyle}`}>{title}</Text>

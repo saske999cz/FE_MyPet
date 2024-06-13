@@ -2,9 +2,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
-  ImageBackground,
-  ScrollView,
   FlatList,
   RefreshControl,
 } from "react-native";
@@ -12,34 +9,41 @@ import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
-import { images } from "../../constants";
 import { router } from "expo-router";
-import CartItem from "../../components/CartItem";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useGlobalState, setGlobalState } from "../../state/GlobalState";
-import Toast from "react-native-toast-message";
+import { get_current_cart } from "../../api/CartApi";
+import LottieView from "lottie-react-native";
+import { useGlobalContext } from "../../state/GlobalContextProvider";
+import CartSection from "../../components/CartSection";
 
 const Cart = () => {
   const [refreshing, setRefreshing] = useState(false);
-  const [activeCategory, setActiveCategory] = useState("posts");
-  const [cartItems, setCartItems] = useState([]);
-  const cartStatus = useGlobalState("cartStatus");
-  const toastStatus = useGlobalState("toastStatus");
-  const removedCartItem = useGlobalState("removedCartItem");
+  const [shops, setShops] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { cartId, cartChanged, cartLength, setCheckOutItems, quantityChanged } =
+    useGlobalContext();
+  const [removedShopId, setRemovedShopId] = useState(null);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [isCalculating, setIsCalculating] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // fetch data
     setRefreshing(false);
   };
 
   const fetchCartItems = async () => {
     try {
-      const cartItems = await AsyncStorage.getItem("cartItems");
-      if (cartItems !== null) {
-        setCartItems(JSON.parse(cartItems));
-      }
-      setGlobalState("cartStatus", false);
+      get_current_cart().then((res) => {
+        if (res && res.status === 200) {
+          setShops([...res.data.shops]);
+          setTotalAmount(res.data.cart.total_prices);
+          setIsLoading(false);
+          setIsCalculating(false);
+        } else {
+          console.error("Error fetching cart items:", res.data.message);
+          setIsLoading(false);
+        }
+      });
     } catch (error) {
       console.error("Error fetching cart items:", error);
     }
@@ -47,31 +51,36 @@ const Cart = () => {
 
   useEffect(() => {
     fetchCartItems();
-  }, [cartStatus[0]]);
+  }, []);
 
   useEffect(() => {
-    if (toastStatus[0] === true) {
-      setTimeout(() => {
-        Toast.show({
-          type: "success",
-          text1: "Cart item removed!",
-          text2: removedCartItem[0] + " has been removed from your cart",
-          visibilityTime: 3000,
-        });
-      }, 100);
-    }
-    setTimeout(() => {
-      setGlobalState("toastStatus", false);
-    }, 2000);
-  }, [toastStatus[0]]);
+    fetchCartItems();
+  }, [cartChanged, quantityChanged]);
 
   const handleBack = () => {
     router.back();
   };
 
   const handleCheckout = () => {
-    router.push("../screens/CheckOut");
+    const combinedCartItems = shops.reduce((acc, shop) => {
+      return acc.concat(shop.cart_items);
+    }, []);
+    setCheckOutItems(combinedCartItems);
+    router.push({
+      pathname: "../screens/CheckOut",
+      params: {
+        totalAmount: totalAmount,
+      },
+    });
   };
+
+  useEffect(() => {
+    if (removedShopId !== null) {
+      const newShops = shops.filter((shop) => shop.shop_id !== removedShopId);
+      setShops(newShops);
+    }
+  }, [removedShopId]);
+
   return (
     <SafeAreaView className="h-full w-full">
       <View className="w-full h-12 flex-row items-center justify-center">
@@ -85,57 +94,87 @@ const Cart = () => {
             style={{ color: "#f59e0b" }}
           />
         </TouchableOpacity>
-        <Text className="text-[16px] font-bold">
-          My Cart ({cartItems.length})
-        </Text>
+        <Text className="text-[16px] font-bold">My Cart ({cartLength})</Text>
       </View>
       <View className="w-full h-[1px] bg-gray-200 mb-2"></View>
-      <FlatList
-        data={cartItems}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <CartItem
-            id={parseInt(item.id)}
-            image={item.image}
-            title={item.title}
-            rating={item.rating}
-            price={item.price}
-            soldUnits={item.soldUnits}
-            shop={item.shop}
+      {isLoading ? (
+        <View className="w-full h-full flex-row items-start justify-center">
+          <LottieView
+            style={{ width: 130, height: 130, marginTop: 150 }}
+            source={require("../../assets/lottie/loading.json")}
+            autoPlay
+            loop
+            speed={1.5}
           />
-        )}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      />
-      <View className="w-full h-12 flex-row items-center justify-between border-t-[1px] border-solid border-gray-300 mb-5">
-        <Text className="text-[16px] font-semibold ml-2">Total</Text>
-        <View className="w-[80%] h-full flex-row items-center justify-end">
-          <View className="w-[60%] h-full flex-row items-center justify-end px-4">
-            <FontAwesomeIcon
-              icon={icons.faDongSign}
-              size={13}
-              style={{ color: "#f59e0b" }}
-            />
-            <Text className="text-[16px] font-bold text-[#f59e0b]">
-              {cartItems.reduce((acc, item) => {
-                return acc + parseInt(item.price);
-              }, 0)}
-            </Text>
-          </View>
-          <TouchableOpacity
-            className="w-[40%] h-full bg-[#f59e0b] flex-row items-center justify-center"
-            onPress={handleCheckout}
-          >
-            <Text className="text-[15px] font-semibold text-white">
-              Checkout
-            </Text>
-          </TouchableOpacity>
         </View>
-      </View>
-      <View style={{ position: "absolute", top: 20, left: 20, right: 20 }}>
-        <Toast />
-      </View>
+      ) : (
+        <FlatList
+          scrollEventThrottle={16}
+          data={shops}
+          renderItem={({ item }) => (
+            <View className="w-full h-fit px-2 mt-1 mb-2">
+              <CartSection
+                id={item.shop_id}
+                cartId={cartId}
+                items={item.cart_items}
+                shopAddress={item.shop_address}
+                shopImage={item.shop_image}
+                shopAvatar={item.shop_avatar}
+                shopName={item.shop_name}
+                shopPhone={item.shop_phone}
+                shopDescription={item.shop_description}
+                shopFanpage={item.shop_fanpage}
+                shopWebsite={item.shop_website}
+                shopEstablished={item.shop_established}
+                workTime={item.shop_work_time}
+                shopRating={item.rating}
+                setRemovedShopId={setRemovedShopId}
+                setIsCalculating={setIsCalculating}
+              />
+            </View>
+          )}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        />
+      )}
+      {isLoading ? null : (
+        <View className="w-full h-12 flex-row items-center justify-between border-t-[1px] border-solid border-gray-300 mb-5">
+          <Text className="text-[16px] font-semibold ml-2">Total</Text>
+          <View className="w-[80%] h-full flex-row items-center justify-end">
+            {isCalculating ? (
+              <View className="w-[60%] h-full flex-row items-center justify-end px-4">
+                <LottieView
+                  style={{ width: 40, height: 40, marginTop: 3 }}
+                  source={require("../../assets/lottie/cartLoading.json")}
+                  autoPlay
+                  loop
+                  speed={1.5}
+                />
+              </View>
+            ) : (
+              <View className="w-[60%] h-full flex-row items-center justify-end px-4">
+                <FontAwesomeIcon
+                  icon={icons.faDongSign}
+                  size={13}
+                  style={{ color: "#f59e0b" }}
+                />
+                <Text className="text-[16px] font-bold text-[#f59e0b]">
+                  {parseInt(totalAmount).toLocaleString("vi-VN")}
+                </Text>
+              </View>
+            )}
+            <TouchableOpacity
+              className="w-[40%] h-full bg-[#f59e0b] flex-row items-center justify-center"
+              onPress={handleCheckout}
+            >
+              <Text className="text-[15px] font-semibold text-white">
+                Checkout
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </SafeAreaView>
   );
 };

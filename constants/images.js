@@ -66,6 +66,8 @@ import paypal from "../assets/images/paypal.png";
 import nodata from "../assets/images/nodatafound.png";
 import logout from "../assets/images/logout.png";
 import checklist from "../assets/images/checklist.png";
+import simple_background from "../assets/images/simple_background.jpg";
+import cod from "../assets/images/cod.png";
 
 export default {
   profile,
@@ -136,4 +138,6 @@ export default {
   nodata,
   logout,
   checklist,
+  simple_background,
+  cod,
 };

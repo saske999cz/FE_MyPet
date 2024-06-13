@@ -58,7 +58,7 @@ const DoctorCard = ({ id, name, image, age, gender, rating, email, phone }) => {
                 className="w-full h-full rounded-t-lg"
                 placeholder={{ blurhash }}
                 contentFit="cover"
-                transition={200}
+                transition={0}
               />
             )}
           </View>

@@ -1,11 +1,11 @@
 import {
   View,
   Text,
-  ScrollView,
   TouchableOpacity,
   RefreshControl,
   Animated,
   FlatList,
+  Modal,
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,8 +14,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import AdoptPetCard from "../../components/AdoptPetCard";
 import SearchInput from "../../components/SearchInput";
 import { PetDummy } from "../../dummy/FakeData";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
+import { useGlobalContext } from "../../state/GlobalContextProvider";
+import LottieView from "lottie-react-native";
 
 const Header_Max_Height = 230;
 const Header_Min_Height = 70;
@@ -235,10 +236,11 @@ const DynamicHeader = ({
 };
 
 const adopt = () => {
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const { userAvatar, userLocation, userLocationData } = useGlobalContext();
   const [refreshing, setRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState("none");
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
   const onRefresh = async () => {
     setRefreshing(true);
@@ -262,31 +264,43 @@ const adopt = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const getUserAvatar = async () => {
-      const userAvatar = await AsyncStorage.getItem("userAvatar");
-      setAvatarUrl(userAvatar);
-    };
-
-    getUserAvatar();
-  }, []);
-
   return (
     <SafeAreaView className="h-full flex-col">
-      <SafeAreaView className="flex-row items-center w-[25%] justify-around absolute top-0 right-0 z-50 mr-10 mt-[14px]">
-        <View className="w-28 h-10 flex-row items-center justify-center mr-12">
-          <Text className="text-[12px] font-semibold mr-1 mt-1">
-            Da Nang, VN
-          </Text>
-          <FontAwesomeIcon
-            icon={icons.faLocationDot}
-            size={20}
-            style={{ color: "#ef4444" }}
-          />
-        </View>
-        {avatarUrl && (
+      <SafeAreaView className="flex-row items-center w-[30%] justify-end absolute top-0 right-0 z-50 mr-4 mt-[16px]">
+        {userLocation ? (
+          <TouchableOpacity
+            className="w-24 h-8 flex-row items-center justify-center mr-[7px]"
+            onPress={() => setShowModal(true)}
+          >
+            <Text
+              className="text-[12px] font-semibold mt-1"
+              ellipsizeMode="tail"
+              numberOfLines={1}
+            >
+              {userLocation.length > 13
+                ? userLocation.substring(0, 13)
+                : userLocation}
+            </Text>
+            <FontAwesomeIcon
+              icon={icons.faLocationDot}
+              size={20}
+              style={{ color: "#ef4444" }}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View className="w-28 h-10 flex-row items-center justify-center">
+            <LottieView
+              style={{ width: 55, height: 55 }}
+              source={require("../../assets/lottie/globe.json")}
+              autoPlay
+              loop
+              speed={1.5}
+            />
+          </View>
+        )}
+        {userAvatar && (
           <Image
-            source={{ uri: avatarUrl }}
+            source={{ uri: userAvatar }}
             className="w-9 h-9 rounded-full"
             transition={0}
             placeholder={{ blurhash }}
@@ -328,6 +342,30 @@ const adopt = () => {
         )}
         showsVerticalScrollIndicator={false}
       />
+      <Modal visible={showModal} animationType="fade" transparent={true}>
+        <TouchableOpacity
+          className="flex-1 bg-zinc-900/40 opacity-100 h-full w-full flex-row items-center justify-center"
+          onPress={() => setShowModal(false)}
+        >
+          <View className="w-80 flex-col h-24 items-center justify-center bg-white rounded-md">
+            <View className="w-full h-[45%] flex-row items-center justify-center mt-2">
+              <FontAwesomeIcon
+                icon={icons.faLocationDot}
+                size={20}
+                style={{ color: "#ef4444" }}
+              />
+              <Text className="text-[13px] text-gray-600 font-medium ml-1">
+                Current location:
+              </Text>
+            </View>
+            <View className="w-full h-[45%] flex-row items-center justify-center">
+              <Text className="text-[13px] text-gray-600 font-medium">
+                {userLocationData}
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };

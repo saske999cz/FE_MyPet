@@ -4,7 +4,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
 import { router } from "expo-router";
-import { VetAppointmentsDummy } from "../../dummy/FakeData";
 import { useLocalSearchParams } from "expo-router";
 import { get_appointment_detail_by_id } from "../../api/AppointmentApi";
 import LottieView from "lottie-react-native";
@@ -114,7 +113,7 @@ const AppointmentDetail = () => {
               <View className="w-full h-5 flex-row items-center justify-start mt-1">
                 <Text className="text-[13px] ml-7 font-medium">Phone:</Text>
                 <Text className="text-[13px] ml-2">
-                  {appointment.customer.name}
+                  {appointment.customer.phone}
                 </Text>
               </View>
               <View className="w-full h-5 flex-row items-center justify-start mt-1">

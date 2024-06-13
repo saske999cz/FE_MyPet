@@ -1,5 +1,7 @@
-import { View, Image, Text, Dimensions } from "react-native";
+import { View, Text, Dimensions } from "react-native";
 import React from "react";
+import { Image } from "expo-image";
+import { blurhash } from "../constants";
 
 const windowWidth = Dimensions.get("window").width;
 
@@ -15,6 +17,8 @@ const DynamicImageGrid = ({ images }) => {
                   typeof images[0] === "string" ? { uri: images[0] } : images[0]
                 }
                 style={{ width: windowWidth, height: 300 }}
+                placeholder={{ blurhash }}
+                transition={0}
               />
             );
           case 2:
@@ -23,6 +27,8 @@ const DynamicImageGrid = ({ images }) => {
                 key={index}
                 source={typeof image === "string" ? { uri: image } : image}
                 style={{ width: windowWidth, height: 145, margin: 5 }}
+                placeholder={{ blurhash }}
+                transition={0}
               />
             ));
           case 3:
@@ -35,6 +41,8 @@ const DynamicImageGrid = ({ images }) => {
                       : images[0]
                   }
                   style={{ width: windowWidth, height: 145 }}
+                  placeholder={{ blurhash }}
+                  transition={0}
                 />
                 <View style={{ flexDirection: "row" }}>
                   {images.slice(1).map((image, index) => (
@@ -48,6 +56,8 @@ const DynamicImageGrid = ({ images }) => {
                         height: 145,
                         margin: 5,
                       }}
+                      placeholder={{ blurhash }}
+                      transition={0}
                     />
                   ))}
                 </View>
@@ -63,6 +73,8 @@ const DynamicImageGrid = ({ images }) => {
                       : images[0]
                   }
                   style={{ width: windowWidth, height: 215 }}
+                  placeholder={{ blurhash }}
+                  transition={0}
                 />
                 <View style={{ flexDirection: "row" }}>
                   {images.slice(1).map((image, index) => (
@@ -76,6 +88,8 @@ const DynamicImageGrid = ({ images }) => {
                         height: 75,
                         margin: 5,
                       }}
+                      placeholder={{ blurhash }}
+                      transition={0}
                     />
                   ))}
                 </View>
@@ -97,6 +111,8 @@ const DynamicImageGrid = ({ images }) => {
                         height: 215,
                         margin: 5,
                       }}
+                      placeholder={{ blurhash }}
+                      transition={0}
                     />
                   ))}
                 </View>
@@ -112,6 +128,8 @@ const DynamicImageGrid = ({ images }) => {
                         height: 75,
                         margin: 5,
                       }}
+                      placeholder={{ blurhash }}
+                      transition={0}
                     />
                   ))}
                   {images.length > 5 ? (
@@ -135,6 +153,8 @@ const DynamicImageGrid = ({ images }) => {
                           height: 75,
                           position: "absolute",
                         }}
+                        placeholder={{ blurhash }}
+                        transition={0}
                       />
                       <View className="w-full h-full absolute top-0 left-0 right-0 bottom-0 bg-black opacity-60 z-22 flex-row items-center justify-center">
                         <Text className="font-semibold text-[14px] opacity-50">
@@ -163,6 +183,8 @@ const DynamicImageGrid = ({ images }) => {
                         height: 75,
                         margin: 5,
                       }}
+                      placeholder={{ blurhash }}
+                      transition={0}
                     />
                   )}
                 </View>

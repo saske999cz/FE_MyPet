@@ -68,7 +68,7 @@ const MedicalCenterCard = ({
               className="w-full h-32 rounded-t-lg"
               placeholder={{ blurhash }}
               contentFit="cover"
-              transition={200}
+              transition={0}
             />
           )}
           <View className="w-full flex-col items-start justify-center mt-2 px-2 py-2">

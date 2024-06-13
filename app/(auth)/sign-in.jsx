@@ -8,10 +8,19 @@ import { Link, router } from "expo-router";
 import { user_login } from "../../api/AuthApi";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ApiManager from "../../api/ApiManager";
+import { useGlobalContext } from "../../state/GlobalContextProvider";
 
 const SignIn = () => {
   const [form, setForm] = useState({ email: "", password: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState({});
+  const {
+    setUserName,
+    setUserAvatar,
+    setUserId,
+    setUserEmail,
+    setUserFullName,
+  } = useGlobalContext();
 
   const validateEmail = (email) => {
     const re =
@@ -20,61 +29,78 @@ const SignIn = () => {
   };
 
   const submit = () => {
+    let newErrors = {};
     if (form.email.length == 0) {
-      alert("Email is required");
-      return;
+      newErrors.email = "Email is required";
     }
     if (!validateEmail(form.email)) {
-      alert("Email is invalid");
-      return;
+      newErrors.email = "Email is invalid";
+    }
+    if (form.email.length == 0) {
+      newErrors.email = "Email is required";
     }
     if (form.password.length == 0) {
-      alert("Password is required");
-      return;
+      newErrors.password = "Password is required";
     }
-    setIsSubmitting(true);
-    user_login({ email: form.email, password: form.password })
-      .then((res) => {
-        if (res && res.status === 200) {
-          AsyncStorage.setItem("token", res.data.access_token);
-          AsyncStorage.setItem("userName", res.data.user.username);
-          AsyncStorage.setItem("userAvatar", res.data.user.avatar);
-          AsyncStorage.setItem("userId", res.data.user.id.toString());
-          ApiManager.defaults.headers.common[
-            "Authorization"
-          ] = `Bearer ${res.data.access_token}`;
+    setError(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      alert("Please fill in all required fields");
+    } else {
+      setIsSubmitting(true);
+      user_login({ email: form.email, password: form.password })
+        .then((res) => {
+          if (res && res.status === 200) {
+            AsyncStorage.setItem("token", res.data.access_token);
+            setUserName(res.data.user.username);
+            setUserAvatar(res.data.user.avatar);
+            setUserId(res.data.user.id);
+            setUserEmail(res.data.user.email);
+            setUserFullName(res.data.user.full_name);
+            console.log("Full name", res.data.user.full_name);
+            ApiManager.defaults.headers.common[
+              "Authorization"
+            ] = `Bearer ${res.data.access_token}`;
+            setIsSubmitting(false);
+            router.replace("../(tabs)/home");
+          } else {
+            alert(res.data.message);
+          }
+        })
+        .catch((err) => {
+          alert("An error occurred, please try again", err);
           setIsSubmitting(false);
-          router.replace("../(tabs)/home");
-        } else {
-          alert(res.data.message);
-        }
-      })
-      .catch((err) => {
-        alert("An error occurred, please try again", err);
-        setIsSubmitting(false);
-      });
+        });
+    }
   };
   return (
     <View className="w-full h-full">
       <SafeAreaView className="w-full bg-[#E58E37] h-full">
         <ScrollView contentContainerStyle={{ height: "100%" }}>
           <View className="w-full h-full justify-start px-4">
-            <Text className="font-semibold text-2xl text-white  mt-32 w-[full] text-center">
+            <Text className="font-semibold text-2xl text-black  mt-32 w-[full] text-center">
               Sign in
             </Text>
             <FormField
               title="Email"
               value={form.email}
-              handleChangeText={(e) => setForm({ ...form, email: e })}
+              handleChangeText={(e) => {
+                setForm({ ...form, email: e });
+                setError({ ...error, email: null });
+              }}
               otherStyles="mt-7"
               keyBoardType="email-address"
+              titleStyles={"text-black font-[13px]"}
             />
             <FormField
               title="Password"
               value={form.password}
-              handleChangeText={(e) => setForm({ ...form, password: e })}
+              handleChangeText={(e) => {
+                setForm({ ...form, password: e });
+                setError({ ...error, password: null });
+              }}
               otherStyles="mt-7"
               secureText={true}
+              titleStyles={"text-black font-[13px]"}
             />
             <CustomButton
               title="Sign In"

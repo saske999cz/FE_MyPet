@@ -37,8 +37,10 @@ const MyMinimalPost = ({
       <View className="w-full h-fit flex-col items-center jusify-start border-b-4 border-gray-300 pb-2">
         <View className="flex-row justify-between items-center w-full h-10 mt-2 px-3">
           <View className="w-[90%] flex-row items-center justify-start">
-            <Image source={avatar} className="w-9 h-9 rounded-full" />
-            <Text className="ml-4 text-[16px] font-semibold">{username}</Text>
+            <View className="w-9 h-9 rounded-full border-[1px] border-solid border-gray-300">
+              <Image source={avatar} className="w-full h-full rounded-full" />
+            </View>
+            <Text className="ml-2 text-[15px] font-semibold">{username}</Text>
           </View>
 
           <TouchableOpacity
@@ -59,7 +61,7 @@ const MyMinimalPost = ({
             </Text>
           </View>
           <View className="flex-1">
-            <Text className="ml-4 text-[15px] font-semibold text-gray-600">
+            <Text className="ml-2 text-[15px] font-semibold text-gray-600">
               {title}
             </Text>
           </View>

@@ -8,8 +8,6 @@ import { getDownloadURL, ref, listAll } from "firebase/storage";
 import { CustomLoader } from "./CustomLoader";
 import { Image } from "expo-image";
 
-const imageUrlCache = {};
-
 const ItemCard = ({
   id,
   image,
@@ -21,46 +19,27 @@ const ItemCard = ({
   isHorizontal,
   description,
 }) => {
-  const [imageUrl, setImageUrl] = useState(imageUrlCache[image] || null);
-  const [isLoading, setIsLoading] = useState(!imageUrlCache[image]);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
     const fetchImage = async () => {
       try {
         const imageFolderRef = ref(FIREBASE_STORAGE, image);
         const res = await listAll(imageFolderRef);
         if (res.items.length > 0) {
           const url = await getDownloadURL(res.items[0]);
-          if (isMounted) {
-            imageUrlCache[image] = url; // Update cache
-            setImageUrl(url);
-            setIsLoading(false);
-          }
+          setImageUrl(url);
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Error fetching image:", error);
-        if (isMounted) {
-          setIsLoading(false);
-        }
+
+        setIsLoading(false);
       }
     };
-
-    // Check cache first
-    if (imageUrlCache[image]) {
-      setImageUrl(imageUrlCache[image]);
-      setIsLoading(false);
-    } else {
-      // Reset state and fetch image
-      setImageUrl(null);
-      setIsLoading(true);
-      fetchImage();
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [image]);
+    fetchImage();
+  }, []);
 
   const handlePress = () => {
     router.push({
@@ -93,7 +72,7 @@ const ItemCard = ({
               className="w-full h-32 rounded-t-lg"
               placeholder={{ blurhash }}
               contentFit="cover"
-              transition={200}
+              transition={0}
             />
           )}
           <View className="w-full flex-col items-start justify-center mt-2 px-2 max-h-20">
@@ -113,7 +92,7 @@ const ItemCard = ({
                 style={{ color: "#f59e0b" }}
               />
               <Text className="text-[15px] text-[#fb923c] font-semibold">
-                {parseInt(price).toLocaleString("en-US")}
+                {parseInt(price).toLocaleString("vi-VN")}
               </Text>
             </View>
             <View className="flex-row w-full items-center justify-start mb-2">

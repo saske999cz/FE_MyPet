@@ -75,6 +75,7 @@ const MedicalCenterDetail = () => {
         medicalCenterName: medicalCenterName,
         medicalCenterTelephone: medicalCenterTelephone,
         medicalCenterWorkingHours: medicalCenterWorkingHours,
+        medicalCenterImage: imageUrls[0],
       },
     });
   };
@@ -189,6 +190,7 @@ const MedicalCenterDetail = () => {
               contentFit="contain"
               style={{ aspectRatio: 16 / 9 }}
               placeholder={{ blurhash }}
+              transition={0}
             />
             <View className="w-10 h-5 flex-row items-center justify-center bg-white rounded-full border-[0.5px] border-solid border-gray-300 mt-3 mb-2">
               <Text className="text-[12px] text-gray-700">
@@ -209,6 +211,7 @@ const MedicalCenterDetail = () => {
                         source={{ uri: item }}
                         className="w-full h-full rounded-[3px]"
                         placeholder={{ blurhash }}
+                        transition={0}
                       />
                     </TouchableOpacity>
                   )}

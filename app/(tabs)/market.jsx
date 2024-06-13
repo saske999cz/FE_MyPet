@@ -19,7 +19,7 @@ import { router } from "expo-router";
 import { get_best_selling_products, search_product } from "../../api/MarketApi";
 import { Image } from "expo-image";
 import LottieView from "lottie-react-native";
-import { set } from "date-fns";
+import { useGlobalContext } from "../../state/GlobalContextProvider";
 
 const Header_Max_Height = 230;
 const Header_Min_Height = 70;
@@ -35,7 +35,7 @@ const DynamicHeader = ({
   setQuery,
   handleSearch,
 }) => {
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const { userAvatar } = useGlobalContext();
 
   const handleCartPress = () => {
     router.push("../screens/Cart");
@@ -136,14 +136,6 @@ const DynamicHeader = ({
     ],
   };
 
-  useEffect(() => {
-    const getUserAvatar = async () => {
-      const userAvatar = await AsyncStorage.getItem("userAvatar");
-      setAvatarUrl(userAvatar);
-    };
-    getUserAvatar();
-  }, []);
-
   return (
     <Animated.View
       style={{
@@ -184,9 +176,9 @@ const DynamicHeader = ({
                 style={{ color: "#000000" }}
               />
             </TouchableOpacity>
-            {avatarUrl && (
+            {userAvatar && (
               <Image
-                source={{ uri: avatarUrl }}
+                source={{ uri: userAvatar }}
                 className="w-9 h-9 rounded-full"
                 transition={0}
                 placeholder={{ blurhash }}
@@ -307,64 +299,24 @@ const DynamicHeader = ({
 };
 
 const market = () => {
-  const [cartLength, setCartLength] = useState(null);
+  const { cartLength } = useGlobalContext();
   const [refreshing, setRefreshing] = useState(false);
   const [products, setProducts] = useState([]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [page, setPage] = useState(1);
   const [activeCategory, setActiveCategory] = useState("");
-  const addedCartItem = useGlobalState("addedCartItem");
-  const toastStatus = useGlobalState("toastStatus");
-  const cartStatus = useGlobalState("cartStatus");
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
   const [isLoading, setIsLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
+  const [maxPage, setMaxPage] = useState(1);
 
   const handleLoadMore = () => {
+    if (page >= maxPage) {
+      return;
+    }
     setPage((prevPage) => prevPage + 1);
   };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const storedCartLength = await retrieveData("cartLength");
-      setCartLength(storedCartLength);
-    };
-    fetchData();
-  }, [toastStatus[0], cartStatus[0]]);
-
-  const retrieveData = async (key) => {
-    try {
-      const value = await AsyncStorage.getItem(key);
-      if (value !== null) {
-        const parsedValue = JSON.parse(value);
-        return parsedValue;
-      } else {
-        return 0;
-      }
-    } catch (error) {
-      console.error("Error retrieving data:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (toastStatus[0] === true && addedCartItem[0] !== "") {
-      setTimeout(() => {
-        Toast.show({
-          type: "success",
-          text1: "New cart item!",
-          text2: addedCartItem[0] + " has been added to your cart",
-          visibilityTime: 3000,
-        });
-      }, 100);
-      const newCartLength = retrieveData("cartLength");
-      setCartLength(newCartLength);
-    }
-    setTimeout(() => {
-      setGlobalState("toastStatus", false);
-      setGlobalState("addedCartItem", "");
-    }, 2000);
-  }, [toastStatus[0]]);
 
   const handlePressCategory = (category) => {
     if (category === activeCategory) {
@@ -411,7 +363,7 @@ const market = () => {
 
   useEffect(() => {
     if (searching) {
-      search_product(query, page, 10)
+      search_product(query, page, 12)
         .then((res) => {
           if (res && res.status === 200 && res.data.data.length > 0) {
             const newProducts = [...products, ...res.data.data];
@@ -422,17 +374,21 @@ const market = () => {
               return unique;
             }, []);
             setProducts(uniqueProducts);
+            if (page === 1) {
+              setMaxPage(res.data.total_pages);
+            }
             setIsLoading(false);
           } else {
             setProducts([]);
             setIsLoading(false);
+            console.log("No data found.");
           }
         })
         .catch((err) => {
           alert(err.message);
         });
     } else
-      get_best_selling_products(page, 10, activeCategory)
+      get_best_selling_products(page, 12, activeCategory)
         .then((res) => {
           if (res && res.status === 200 && res.data.data.length > 0) {
             const newProducts = [...products, ...res.data.data];
@@ -443,6 +399,9 @@ const market = () => {
               return unique;
             }, []);
             setProducts(uniqueProducts);
+            if (page === 1) {
+              setMaxPage(res.data.total_pages);
+            }
             setIsLoading(false);
           } else {
             setProducts([]);
@@ -484,7 +443,7 @@ const market = () => {
         </View>
       ) : products && products.length > 0 ? (
         <FlatList
-          scrollEventThrottle={2}
+          scrollEventThrottle={8}
           data={products}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
@@ -519,8 +478,8 @@ const market = () => {
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           viewabilityConfig={{
-            itemVisiblePercentThreshold: 80,
-            minimumViewTime: 300,
+            itemVisiblePercentThreshold: 20,
+            minimumViewTime: 250,
           }}
         />
       ) : (
@@ -532,9 +491,6 @@ const market = () => {
           />
         </View>
       )}
-      <View style={{ position: "absolute", top: 20, left: 20, right: 20 }}>
-        <Toast />
-      </View>
     </SafeAreaView>
   );
 };
