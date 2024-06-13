@@ -15,6 +15,7 @@ const FormField = ({
   secureText,
   error,
   numericKeyboard,
+  errorTextStyles,
   ...props
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -26,7 +27,15 @@ const FormField = ({
           {title}
         </Text>
         {error && (
-          <Text className="text-red-500 text-[12px] ml-4">{error}</Text>
+          <Text
+            className={`${
+              errorTextStyles
+                ? errorTextStyles
+                : "text-red-500 text-[12px] ml-4"
+            }`}
+          >
+            {error}
+          </Text>
         )}
       </View>
       <View

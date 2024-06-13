@@ -16,6 +16,7 @@ const SignUp = () => {
     confirm_password: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState({});
 
   const validateEmail = (email) => {
     const re =
@@ -24,43 +25,50 @@ const SignUp = () => {
   };
 
   const submit = () => {
+    let newErrors = {};
     if (form.username.length < 4) {
-      alert("Username is required and must be at least 4 characters long");
-      return;
+      newErrors.username = "Username is required";
     }
     if (form.email.length == 0) {
-      alert("Email is required");
-      return;
+      newErrors.email = "Email is required";
     }
     if (!validateEmail(form.email)) {
-      alert("Email is invalid");
-      return;
+      newErrors.email = "Email is invalid";
     }
     if (form.password !== form.confirm_password) {
-      alert("Passwords do not match");
-      return;
+      newErrors.confirm_password = "Passwords do not match";
     }
     if (form.password.length < 8) {
-      alert("Password is required and must be at least 8 characters long");
-      return;
+      newErrors.password = "Password must be at least 8 characters";
     }
-    setIsSubmitting(true);
-    user_register({
-      username: form.username,
-      email: form.email,
-      password: form.password,
-      confirm_password: form.confirm_password,
-    })
-      .then((res) => {
-        if (res.status === 201) {
-          setIsSubmitting(false);
-          router.replace("/sign-in");
-          alert("Account created successfully");
-        }
-      })
-      .catch((err) => {
-        alert("Error: " + err.message);
-      });
+    if (form.password.length == 0) {
+      newErrors.password = "Password is required";
+    }
+    if (form.confirm_password.length == 0) {
+      newErrors.confirm_password = "Confirm password is required";
+    }
+    setError(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      alert("Please fill in all required fields");
+    } else {
+      setIsSubmitting(true);
+      router.replace("../screens/BasicAccountInfo");
+      // user_register({
+      //   username: form.username,
+      //   email: form.email,
+      //   password: form.password,
+      //   confirm_password: form.confirm_password,
+      // })
+      //   .then((res) => {
+      //     if (res.status === 201) {
+      //       setIsSubmitting(false);
+      //       router.replace("../screens/BasicAccountInfo");
+      //     }
+      //   })
+      //   .catch((err) => {
+      //     alert("Error: " + err.message);
+      //   });
+    }
   };
 
   return (
@@ -68,37 +76,55 @@ const SignUp = () => {
       <SafeAreaView className="w-full bg-[#E58E37] h-full">
         <ScrollView contentContainerStyle={{ height: "100%" }}>
           <View className="w-full h-full justify-start px-4">
-            <Text className="font-semibold text-2xl text-white mt-8 w-[full] text-center">
+            <Text className="font-semibold text-2xl text-black mt-8 w-[full] text-center">
               Sign up
             </Text>
             <FormField
               title="Username"
               value={form.username}
-              handleChangeText={(e) => setForm({ ...form, username: e })}
+              handleChangeText={(e) => {
+                setForm({ ...form, username: e });
+                setError({ ...error, username: null });
+              }}
               otherStyles="mt-7"
+              titleStyles={"text-black font-[13px]"}
+              error={error.username}
             />
             <FormField
               title="Email"
               value={form.email}
-              handleChangeText={(e) => setForm({ ...form, email: e })}
+              handleChangeText={(e) => {
+                setForm({ ...form, email: e });
+                setError({ ...error, email: null });
+              }}
               otherStyles="mt-7"
               keyBoardType="email-address"
+              titleStyles={"text-black font-[13px]"}
+              error={error.email}
             />
             <FormField
               title="Password"
               value={form.password}
-              handleChangeText={(e) => setForm({ ...form, password: e })}
+              handleChangeText={(e) => {
+                setForm({ ...form, password: e });
+                setError({ ...error, password: null });
+              }}
               otherStyles="mt-7"
               secureText={true}
+              titleStyles={"text-black font-[13px]"}
+              error={error.password}
             />
             <FormField
               title="Confirm Password"
               value={form.confirm_password}
-              handleChangeText={(e) =>
-                setForm({ ...form, confirm_password: e })
-              }
+              handleChangeText={(e) => {
+                setForm({ ...form, confirm_password: e });
+                setError({ ...error, confirm_password: null });
+              }}
               otherStyles="mt-7"
               secureText={true}
+              titleStyles={"text-black font-[13px]"}
+              error={error.confirm_password}
             />
             <CustomButton
               title="Sign Up"

@@ -3,6 +3,8 @@ import Toast from "react-native-toast-message";
 import * as Location from "expo-location";
 import ApiManager from "../api/ApiManager";
 import { refreshTime } from "../constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import geolib from "geolib";
 
 const GlobalContext = createContext();
 export const useGlobalContext = () => useContext(GlobalContext);
@@ -13,6 +15,16 @@ const GlobalContextProvider = ({ children }) => {
   const [userAvatar, setUserAvatar] = useState(null);
   const [userName, setUserName] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [userEmail, setUserEmail] = useState(null);
+  const [userFullName, setUserFullName] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [userLocationData, setUserLocationData] = useState(null);
+  const [cartLength, setCartLength] = useState(0);
+  const [cartId, setCartId] = useState(null);
+  const [cartChanged, setCartChanged] = useState(false);
+  const [quantityChanged, setQuantityChanged] = useState(false);
+  const [currentCartItems, setCurrentCartItems] = useState([]);
+  const [checkOutItems, setCheckOutItems] = useState([]);
 
   const refreshAccessToken = async () => {
     try {
@@ -64,20 +76,26 @@ const GlobalContextProvider = ({ children }) => {
     return locationData;
   };
 
-  const updateLocation = async () => {
-    try {
-      const { latitude, longitude } = await fetchCurrentLocation();
-      const response = await axiosInstance.post(`/user/location`, {
-        latitude,
-        longitude,
-      });
-      const data = await response.data;
-      if (data) {
-        console.log(data);
-      }
-    } catch (error) {
-      console.error(error);
+  const reverseGeocode = async (location) => {
+    const address = await Location.reverseGeocodeAsync(location);
+    return address;
+  };
+
+  const calculateDistance = async (address) => {
+    const userCoords = await fetchCurrentLocation();
+    const geocodedAddress = await Location.geocodeAsync(address);
+    if (geocodedAddress.length === 0) {
+      return "Address not found";
     }
+    const addressCoords = {
+      latitude: geocodedAddress[0].latitude,
+      longitude: geocodedAddress[0].longitude,
+    };
+
+    const distanceInMeters = geolib.getDistance(userCoords, addressCoords);
+    const distanceInKilometers = geolib.convertDistance(distanceInMeters, "km");
+
+    return distanceInKilometers;
   };
 
   useEffect(() => {
@@ -115,6 +133,26 @@ const GlobalContextProvider = ({ children }) => {
     }
   }, [expirationTime]);
 
+  useEffect(() => {
+    const fetchUserLocation = async () => {
+      const location = await fetchCurrentLocation();
+      const address = await reverseGeocode(location);
+      setUserLocation(address[0].city + ", " + address[0].isoCountryCode);
+      setUserLocationData(
+        address[0].streetNumber +
+          " " +
+          address[0].street +
+          ", " +
+          address[0].district +
+          ", " +
+          address[0].city +
+          ", " +
+          address[0].country
+      );
+    };
+    fetchUserLocation();
+  }, [userLocation]);
+
   return (
     <GlobalContext.Provider
       value={{
@@ -128,6 +166,25 @@ const GlobalContextProvider = ({ children }) => {
         setToast,
         expirationTime,
         setExpirationTime,
+        userFullName,
+        setUserFullName,
+        userEmail,
+        setUserEmail,
+        userLocation,
+        userLocationData,
+        calculateDistance,
+        cartLength,
+        setCartLength,
+        cartId,
+        setCartId,
+        cartChanged,
+        setCartChanged,
+        quantityChanged,
+        setQuantityChanged,
+        currentCartItems,
+        setCurrentCartItems,
+        checkOutItems,
+        setCheckOutItems,
       }}
     >
       {children}

@@ -1,8 +1,14 @@
-import { View, Text, TouchableOpacity, RefreshControl } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  RefreshControl,
+  ImageBackground,
+} from "react-native";
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { icons, blurhash } from "../../constants";
+import { icons, blurhash, images } from "../../constants";
 import { router } from "expo-router";
 import {
   BottomSheetModal,
@@ -35,8 +41,7 @@ const MyPetDetail = () => {
   const [imageUrl, setImageUrl] = useState(null);
 
   useEffect(() => {
-    const encodedPetAvatar = image.replace("/pets/", "/pets%2F");
-    setImageUrl(encodedPetAvatar);
+    setImageUrl(image.replace("/pets/", "/pets%2F"));
     const fetchPetDetail = async () => {
       try {
         get_pet_detail_by_id(id).then((res) => {
@@ -149,24 +154,28 @@ const MyPetDetail = () => {
             <View className="w-full h-fit">
               <View className="w-full h-[1px] bg-gray-200"></View>
               <View className="w-full h-44">
-                {imageUrl && (
+                <ImageBackground
+                  source={images.simple_background}
+                  className="w-full h-full object-center"
+                  resizeMode="cover"
+                />
+                <View className="w-40 h-40 rounded-full border-4 border-solid border-[#F2F2F2] absolute bottom-0 left-0 ml-3 -mb-9 flex-1 items-center justify-center">
                   <Image
                     source={{ uri: imageUrl }}
-                    className="w-full h-full object-center"
-                    transition={200}
+                    className="w-full h-full rounded-full"
                     placeholder={{ blurhash }}
-                    contentFit="cover"
+                    transition={0}
                   />
-                )}
-                <View className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 right-0 mr-2 mb-2 border-[1px] border-solid border-[#F2F2F2]">
+                </View>
+                <TouchableOpacity className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 left-0 ml-32 -mb-9 border-[1px] border-solid border-[#F2F2F2]">
                   <FontAwesomeIcon
                     icon={icons.faCamera}
                     size={16}
                     style={{ color: "#000000" }}
                   />
-                </View>
+                </TouchableOpacity>
               </View>
-              <View className="w-full h-12 flex-row items-center justify-start px-4 mt-3">
+              <View className="w-full h-12 flex-row items-center justify-start px-4 mt-9">
                 <Text className="text-[20px] font-bold">{name}</Text>
               </View>
               <View className="w-full h-9 flex-row items-center justify-start">

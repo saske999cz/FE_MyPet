@@ -6,19 +6,18 @@ import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
+import { useGlobalContext } from "../../state/GlobalContextProvider";
 
 const menu = () => {
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const { userAvatar } = useGlobalContext();
   const handlePressMyProfile = () => {
     router.push("../screens/MyProfile");
   };
   const handleLogOut = () => {
-    AsyncStorage.removeItem("token");
-    AsyncStorage.removeItem("userName");
-    AsyncStorage.removeItem("userAvatar");
-    AsyncStorage.removeItem("userId");
+    AsyncStorage.clear();
     router.replace("/sign-in");
   };
+
   const handlePressMyPet = () => {
     router.push("../screens/MyPet");
   };
@@ -29,15 +28,6 @@ const menu = () => {
   const handlePressMyOrder = () => {
     router.push("../screens/MyOrder");
   };
-
-  useEffect(() => {
-    const getUserAvatar = async () => {
-      const userAvatar = await AsyncStorage.getItem("userAvatar");
-      setAvatarUrl(userAvatar);
-    };
-
-    getUserAvatar();
-  }, []);
 
   return (
     <SafeAreaView className="h-full flex-col items-center justify-start">
@@ -57,11 +47,11 @@ const menu = () => {
           onPress={handlePressMyProfile}
         >
           <View className="w-16 h-16 flex-row items-center justify-center">
-            {avatarUrl && (
+            {userAvatar && (
               <Image
-                source={{ uri: avatarUrl }}
+                source={{ uri: userAvatar }}
                 className="w-9 h-9 rounded-full"
-                transition={200}
+                transition={0}
                 placeholder={{ blurhash }}
               />
             )}

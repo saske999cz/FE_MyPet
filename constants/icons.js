@@ -64,6 +64,7 @@ import { faLocationArrow } from "@fortawesome/free-solid-svg-icons";
 import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { faCakeCandles } from "@fortawesome/free-solid-svg-icons";
 import { faClipboard } from "@fortawesome/free-solid-svg-icons";
+import { faIdCard } from "@fortawesome/free-solid-svg-icons";
 
 export default {
   play,
@@ -132,4 +133,5 @@ export default {
   faEnvelope,
   faCakeCandles,
   faClipboard,
+  faIdCard,
 };

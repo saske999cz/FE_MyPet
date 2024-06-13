@@ -2,7 +2,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
   ImageBackground,
   RefreshControl,
 } from "react-native";
@@ -17,19 +16,28 @@ import MyPetCard from "../../components/MyPetCard";
 import { ExperimentData } from "../../dummy/FakeData";
 import MyMinimalPost from "../../components/MyMinimalPost";
 import { FlashList } from "@shopify/flash-list";
+import { get_all_my_pets } from "../../api/PetApi";
 import {
   BottomSheetModal,
   BottomSheetModalProvider,
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Image } from "expo-image";
+import { useGlobalContext } from "../../state/GlobalContextProvider";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import LottieView from "lottie-react-native";
 
 const MyProfile = () => {
+  const [userAvatar, setUserAvatar] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState("posts");
   const bottomSheetModalRef = useRef(null);
   const snapPoints = ["30%", "50%"];
   const [focusedPost, setFocusedPost] = useState(null);
+  const { userName, userFullName, userEmail } = useGlobalContext();
+  const [myPets, setMyPets] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -78,6 +86,39 @@ const MyProfile = () => {
     router.push("../screens/EditMyProfile");
   };
 
+  useEffect(() => {
+    const fetchUserAvatar = async () => {
+      const avatar = await AsyncStorage.getItem("userAvatar");
+      setUserAvatar(avatar);
+    };
+
+    const fetchMyPets = async () => {
+      try {
+        get_all_my_pets(1, 10).then((res) => {
+          if (res && res.status === 200) {
+            const newPets = [
+              ...myPets,
+              ...res.data.data.customer_pets,
+              ...res.data.data.adopted_pets,
+            ];
+            const uniquePets = newPets.reduce((unique, pet) => {
+              if (!unique.find((item) => item.pet_id === pet.pet_id)) {
+                unique.push(pet);
+              }
+              return unique;
+            }, []);
+            setMyPets(uniquePets);
+            setIsLoading(false);
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching pets:", error);
+      }
+    };
+    fetchUserAvatar();
+    fetchMyPets();
+  }, []);
+
   const renderBackdrop = useCallback(
     (props) => (
       <BottomSheetBackdrop
@@ -106,178 +147,192 @@ const MyProfile = () => {
             </TouchableOpacity>
             <Text className="text-[16px] font-bold">My Profile</Text>
           </View>
-          <FlashList
-            data={ExperimentData}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <MyMinimalPost
-                username={item.username}
-                title={item.title}
-                description={item.description}
-                avatar={item.avatar}
-                uploadedImage={item.uploadedImage}
-                likes={item.likes}
-                dislikes={item.dislikes}
-                comments={item.comments}
-                handleOpenPostSettings={() => handleOpenPostSettings(item)}
+          {isLoading ? (
+            <View className="w-full h-full flex-row items-start justify-center">
+              <LottieView
+                style={{ width: 130, height: 130, marginTop: 150 }}
+                source={require("../../assets/lottie/loading.json")}
+                autoPlay
+                loop
+                speed={1.5}
               />
-            )}
-            estimatedItemSize={20}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-            showsVerticalScrollIndicator={false}
-            ListHeaderComponent={() => (
-              <View className="w-full h-fit">
-                <View className="w-full h-[1px] bg-gray-200"></View>
-                <View className="w-full h-44">
-                  <ImageBackground
-                    source={images.adopt2}
-                    className="w-full h-full object-center"
-                    resizeMode="cover"
-                  />
-                  <View className="w-40 h-40 rounded-full border-4 border-solid border-[#F2F2F2] absolute bottom-0 left-0 ml-3 -mb-9 flex-1 items-center justify-center">
-                    <Image
-                      source={images.avatar}
-                      className="w-full h-full rounded-full"
+            </View>
+          ) : (
+            <FlashList
+              data={ExperimentData}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <MyMinimalPost
+                  username={item.username}
+                  title={item.title}
+                  description={item.description}
+                  avatar={item.avatar}
+                  uploadedImage={item.uploadedImage}
+                  likes={item.likes}
+                  dislikes={item.dislikes}
+                  comments={item.comments}
+                  handleOpenPostSettings={() => handleOpenPostSettings(item)}
+                />
+              )}
+              estimatedItemSize={20}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+              showsVerticalScrollIndicator={false}
+              ListHeaderComponent={() => (
+                <View className="w-full h-fit">
+                  <View className="w-full h-[1px] bg-gray-200"></View>
+                  <View className="w-full h-44">
+                    <ImageBackground
+                      source={images.simple_background}
+                      className="w-full h-full object-center"
+                      resizeMode="cover"
                     />
+                    <View className="w-40 h-40 rounded-full border-4 border-solid border-[#F2F2F2] absolute bottom-0 left-0 ml-3 -mb-9 flex-1 items-center justify-center">
+                      <Image
+                        source={{ uri: userAvatar }}
+                        className="w-full h-full rounded-full"
+                      />
+                    </View>
+                    <TouchableOpacity className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 left-0 ml-32 -mb-9 border-[1px] border-solid border-[#F2F2F2]">
+                      <FontAwesomeIcon
+                        icon={icons.faCamera}
+                        size={16}
+                        style={{ color: "#000000" }}
+                      />
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 left-0 ml-32 -mb-9 border-[1px] border-solid border-[#F2F2F2]">
-                    <FontAwesomeIcon
-                      icon={icons.faCamera}
-                      size={16}
-                      style={{ color: "#000000" }}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 right-0 mr-2 mb-2 border-[1px] border-solid border-[#F2F2F2]">
-                    <FontAwesomeIcon
-                      icon={icons.faCamera}
-                      size={16}
-                      style={{ color: "#000000" }}
-                    />
-                  </TouchableOpacity>
-                </View>
-                <View className="w-full h-12 flex-row items-center justify-start px-4 mt-8">
-                  <Text className="text-[20px] font-bold">John Doe</Text>
-                </View>
-                <View className="w-full h-9 flex-row items-center justify-start">
-                  <TouchableOpacity
-                    className="w-32 h-9 flex-row items-center justify-center bg-amber-500 rounded-md ml-4"
-                    onPress={handleNavigateEditMyProfile}
-                  >
-                    <FontAwesomeIcon
-                      icon={icons.faPen}
-                      size={12}
-                      style={{ color: "#ffffff" }}
-                    />
-                    <Text className="text-[15px] font-semibold ml-2 text-white">
-                      Edit info
+                  <View className="w-full h-12 flex-row items-center justify-start px-4 mt-9">
+                    <Text className="text-[20px] font-bold">{userName}</Text>
+                  </View>
+                  <View className="w-full h-9 flex-row items-center justify-start">
+                    <TouchableOpacity
+                      className="w-32 h-9 flex-row items-center justify-center bg-amber-500 rounded-md ml-4"
+                      onPress={handleNavigateEditMyProfile}
+                    >
+                      <FontAwesomeIcon
+                        icon={icons.faPen}
+                        size={12}
+                        style={{ color: "#ffffff" }}
+                      />
+                      <Text className="text-[15px] font-semibold ml-2 text-white">
+                        Edit info
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View className="w-full h-[2px] bg-gray-300 mt-4"></View>
+                  <View className="flex-col items-center justify-start mt-4 px-4">
+                    <View className="w-full flex-row items-center justify-start">
+                      <TouchableOpacity
+                        className={`w-16 h-8 rounded-full flex-row items-center justify-center ${
+                          activeCategory === "posts" ? "bg-[#fed7aa]" : ""
+                        }`}
+                      >
+                        <Text
+                          className={`text-[12px] font-semibold ${
+                            activeCategory === "posts"
+                              ? "text-orange-500"
+                              : "text-black"
+                          }`}
+                        >
+                          Posts
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        className={`w-16 h-8 rounded-full flex-row items-center justify-center ${
+                          activeCategory === "photos" ? "bg-[#fed7aa]" : ""
+                        }`}
+                      >
+                        <Text
+                          className={`text-[12px] font-semibold ${
+                            activeCategory === "photos"
+                              ? "text-orange-500"
+                              : "text-black"
+                          }`}
+                        >
+                          Photos
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    <View className="w-full h-[1px] bg-gray-300 mt-4"></View>
+                  </View>
+                  <View className="flex-col items-start justify-start mt-3 px-4">
+                    <Text className="font-semibold text-[16px]">Details</Text>
+                    <View className="flex-row items-center justify-center mt-3">
+                      <FontAwesomeIcon
+                        icon={icons.faIdCard}
+                        size={15}
+                        style={{ color: "#64748b" }}
+                      />
+                      <View className="flex-row items-center justify-center ml-1">
+                        <Text className="text-[14px]">{userFullName}</Text>
+                      </View>
+                    </View>
+                    <View className="flex-row items-center justify-center mt-2">
+                      <FontAwesomeIcon
+                        icon={icons.faEnvelope}
+                        size={15}
+                        style={{ color: "#64748b" }}
+                      />
+                      <View className="flex-row items-center justify-center ml-1">
+                        <Text className="text-[14px]">{userEmail}</Text>
+                      </View>
+                    </View>
+                    <View className="w-full h-[1px] bg-gray-300 mt-4 px-4"></View>
+                  </View>
+                  <View className="flex-col items-start justify-start mt-2 px-4">
+                    <Text className="font-semibold text-[16px]">My Pets</Text>
+                    {myPets && myPets.length > 0 ? (
+                      <View className="w-full h-fit mt-3 flex-col items-center justify-start">
+                        <View
+                          className={`w-full flex-row items-center ${
+                            myPets.length >= 3
+                              ? "justify-around"
+                              : "justify-start"
+                          }`}
+                        >
+                          {myPets.slice(0, 3).map((pet) => (
+                            <MyPetCard key={pet.pet_id} pet={pet} />
+                          ))}
+                        </View>
+                        <View
+                          className={`w-full flex-row items-center ${
+                            myPets.length >= 6
+                              ? "justify-around"
+                              : "justify-start"
+                          }`}
+                        >
+                          {myPets.slice(3, 6).map((pet) => (
+                            <MyPetCard key={pet.pet_id} pet={pet} />
+                          ))}
+                        </View>
+                        {myPets && myPets.length > 6 && (
+                          <TouchableOpacity
+                            className="w-full h-9 flex-row items-center justify-center bg-gray-200 rounded-md mt-4"
+                            onPress={handleNavigateMyPet}
+                          >
+                            <Text className="font-semibold text-[14px]">
+                              See all pets
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    ) : (
+                      <View className="w-full h-fit flex-row items-center justify-start px-4 mt-2 mb-2">
+                        <Text className="text-[13px]">No pets found</Text>
+                      </View>
+                    )}
+                    <View className="w-full h-[1px] bg-gray-300 mt-4 px-4"></View>
+                  </View>
+                  <View className="w-full h-fit flex-col items-start justify-start mt-2 mb-3">
+                    <Text className="font-semibold text-[16px] px-4">
+                      My Posts
                     </Text>
-                  </TouchableOpacity>
-                </View>
-                <View className="w-full h-[2px] bg-gray-300 mt-4"></View>
-                <View className="flex-col items-center justify-start mt-4 px-4">
-                  <View className="w-full flex-row items-center justify-start">
-                    <TouchableOpacity
-                      className={`w-16 h-8 rounded-full flex-row items-center justify-center ${
-                        activeCategory === "posts" ? "bg-[#fed7aa]" : ""
-                      }`}
-                    >
-                      <Text
-                        className={`text-[12px] font-semibold ${
-                          activeCategory === "posts"
-                            ? "text-orange-500"
-                            : "text-black"
-                        }`}
-                      >
-                        Posts
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      className={`w-16 h-8 rounded-full flex-row items-center justify-center ${
-                        activeCategory === "photos" ? "bg-[#fed7aa]" : ""
-                      }`}
-                    >
-                      <Text
-                        className={`text-[12px] font-semibold ${
-                          activeCategory === "photos"
-                            ? "text-orange-500"
-                            : "text-black"
-                        }`}
-                      >
-                        Photos
-                      </Text>
-                    </TouchableOpacity>
                   </View>
-                  <View className="w-full h-[1px] bg-gray-300 mt-4"></View>
                 </View>
-                <View className="flex-col items-start justify-start mt-2 px-4">
-                  <Text className="font-semibold text-[16px]">Details</Text>
-                  <View className="flex-row items-center justify-center mt-3">
-                    <FontAwesomeIcon
-                      icon={icons.faVenusMars}
-                      size={16}
-                      style={{ color: "#000000" }}
-                    />
-                    <View className="flex-row items-center justify-center ml-1">
-                      <Text className="text-[15px]">Male</Text>
-                    </View>
-                  </View>
-                  <View className="flex-row items-center justify-center mt-2">
-                    <FontAwesomeIcon
-                      icon={icons.faHome}
-                      size={16}
-                      style={{ color: "#000000" }}
-                    />
-                    <View className="flex-row items-center justify-center ml-1">
-                      <Text>Lives in </Text>
-                      <Text className="font-semibold text-[15px]">
-                        Da Nang, Viet Nam
-                      </Text>
-                    </View>
-                  </View>
-                  <View className="w-full h-[1px] bg-gray-300 mt-4 px-4"></View>
-                </View>
-                <View className="flex-col items-start justify-start mt-2 px-4">
-                  <Text className="font-semibold text-[16px]">My Pets</Text>
-                  <View className="w-full h-fit mt-3 flex-col items-center justify-start">
-                    <View className="w-full flex-row items-center justify-around">
-                      {PetDummy.slice(0, 3).map((pet, index) => (
-                        <MyPetCard
-                          key={index}
-                          name={pet.name}
-                          image={pet.image}
-                        />
-                      ))}
-                    </View>
-                    <View className="w-full flex-row items-center justify-around">
-                      {PetDummy.slice(3, 6).map((pet, index) => (
-                        <MyPetCard
-                          key={index}
-                          name={pet.name}
-                          image={pet.image}
-                        />
-                      ))}
-                    </View>
-                    <TouchableOpacity
-                      className="w-full h-9 flex-row items-center justify-center bg-gray-200 rounded-md mt-4"
-                      onPress={handleNavigateMyPet}
-                    >
-                      <Text className="font-semibold text-[14px]">
-                        See all pets
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View className="w-full h-[1px] bg-gray-300 mt-4 px-4"></View>
-                </View>
-                <View className="w-full h-fit flex-col items-start justify-start mt-2 mb-3">
-                  <Text className="font-semibold text-[16px] px-4">
-                    My Posts
-                  </Text>
-                </View>
-              </View>
-            )}
-          />
+              )}
+            />
+          )}
           <BottomSheetModal
             ref={bottomSheetModalRef}
             index={0}

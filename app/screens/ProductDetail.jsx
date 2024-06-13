@@ -1,19 +1,11 @@
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { images } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons, blurhash } from "../../constants";
 import { router, useLocalSearchParams } from "expo-router";
-import {
-  ProductImages,
-  ItemDummy,
-  ProductReviewDummy,
-} from "../../dummy/FakeData";
 import ItemCard from "../../components/ItemCard";
-import { setGlobalState } from "../../state/GlobalState";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FlashList } from "@shopify/flash-list";
+import { useGlobalContext } from "../../state/GlobalContextProvider";
 import {
   get_product_detail_by_id,
   get_best_selling_products_by_category,
@@ -24,6 +16,8 @@ import { getDownloadURL, ref, listAll } from "firebase/storage";
 import { ProductDetailLoader } from "../../components/CustomLoader";
 import Review from "../../components/Review";
 import { Image } from "expo-image";
+import { add_item_to_cart } from "../../api/CartApi";
+import LottieView from "lottie-react-native";
 
 const ProductDetail = () => {
   const { id, shopName, shopAddress, rating, shopAvatar, shopImage } =
@@ -40,36 +34,18 @@ const ProductDetail = () => {
   const [flags, setFlags] = useState([]);
   const [reviews, setReviews] = useState(null);
   const [totalReviews, setTotalReviews] = useState(0);
+  const {
+    setToast,
+    cartId,
+    setCartLength,
+    setCartChanged,
+    currentCartItems,
+    setCurrentCartItems,
+  } = useGlobalContext();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
   const handleBack = () => {
     router.back();
-  };
-  const updateData = async (key) => {
-    try {
-      const existingData = await AsyncStorage.getItem(key);
-      if (existingData !== null) {
-        const parsedExistingData = JSON.parse(existingData);
-        const updatedData = parsedExistingData + 1;
-        await AsyncStorage.setItem(key, JSON.stringify(updatedData));
-      } else {
-        await AsyncStorage.setItem(key, JSON.stringify(1));
-      }
-    } catch (error) {
-      console.error("Error updating data:", error);
-    }
-  };
-  const addItemToCart = async (item) => {
-    try {
-      const existingData = await AsyncStorage.getItem("cartItems");
-      if (existingData !== null) {
-        const parsedExistingData = JSON.parse(existingData);
-        const updatedData = [...parsedExistingData, item];
-        await AsyncStorage.setItem("cartItems", JSON.stringify(updatedData));
-      } else {
-        await AsyncStorage.setItem("cartItems", JSON.stringify([item]));
-      }
-    } catch (error) {
-      console.error("Error adding item to cart:", error);
-    }
   };
 
   const handleProductImagePress = (image) => {
@@ -77,29 +53,42 @@ const ProductDetail = () => {
     setCurrentImageIndex(imageUrls.indexOf(image) + 1);
   };
 
-  const clearAllData = async () => {
+  const handleAddToCart = async () => {
+    setIsAddingToCart(true);
+    console.log("Current cart items:", currentCartItems);
     try {
-      await AsyncStorage.clear();
-      console.log("All data cleared successfully");
+      add_item_to_cart(cartId, productDetail.id, 1).then((res) => {
+        if (res && res.status === 200) {
+          setTimeout(() => {
+            setToast({
+              type: "success",
+              text1: "Success",
+              text2: `${productDetail.name} added to cart successfully!`,
+            });
+          }, 100);
+          setCartChanged((prev) => !prev);
+          const isProductInCart = currentCartItems.some((item) => item == id);
+          if (isProductInCart === false) {
+            setCartLength((prev) => prev + 1);
+            setCurrentCartItems([...currentCartItems, id]);
+            console.log("Current cart items after adding:", [
+              ...currentCartItems,
+              id,
+            ]);
+          }
+          setIsAddingToCart(false);
+        } else if (res && res.message === "Insufficient product quantity") {
+          setIsAddingToCart(false);
+          alert(
+            "Can't add this product to cart because the quantity of this product in your cart is already equal to the quantity in stock!"
+          );
+        } else {
+          console.log("Error adding item to cart:", res.message);
+        }
+      });
     } catch (error) {
-      console.error("Error clearing data:", error);
+      console.error("Error adding item to cart:", error);
     }
-  };
-
-  const handleAddToCart = () => {
-    setGlobalState("toastStatus", true);
-    setGlobalState("addedCartItem", title);
-    updateData("cartLength");
-    addItemToCart({
-      id: id,
-      title: title,
-      rating: rating,
-      price: price,
-      soldUnits: soldUnits,
-      shop: shop,
-      image: image,
-    });
-    router.back();
   };
 
   const handleShopPress = () => {
@@ -109,7 +98,7 @@ const ProductDetail = () => {
         shopId: productDetail.shop_id,
         shopName: shopName,
         shopAddress: shopAddress,
-        shopAvatar: shopImageUrl,
+        shopAvatar: shopAvatar,
         shopImage: shopImage,
         workTime: productDetail.shop.work_time,
         shopPhone: productDetail.shop.phone,
@@ -242,9 +231,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     if (flags.length === 5 && flags.every((flag) => flag === true)) {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 300);
+      setIsLoading(false);
     }
   }, [flags]);
 
@@ -276,6 +263,7 @@ const ProductDetail = () => {
               contentFit="contain"
               style={{ aspectRatio: 16 / 9 }}
               placeholder={{ blurhash }}
+              transition={0}
             />
             <View className="w-10 h-5 flex-row items-center justify-center bg-white rounded-full border-[0.5px] border-solid border-gray-300 mt-3 mb-2">
               <Text className="text-[12px] text-gray-700">
@@ -296,6 +284,7 @@ const ProductDetail = () => {
                         source={{ uri: item }}
                         className="w-full h-full rounded-[3px]"
                         placeholder={{ blurhash }}
+                        transition={0}
                       />
                     </TouchableOpacity>
                   )}
@@ -330,6 +319,31 @@ const ProductDetail = () => {
                   <Text className="text-[11px] ml-1">
                     {productDetail.sold_quantity} sold
                   </Text>
+                  <View
+                    className={`w-fit flex-row items-center justify-center ${
+                      productDetail.quantity === 0
+                        ? "bg-red-500 ml-5 px-4 rounded-md h-5"
+                        : "ml-1 h-3 border-l-[1px] border-solid border-gray-300 px-1 -mt-[1px]"
+                    }`}
+                  >
+                    <Text
+                      className={`${
+                        productDetail.quantity === 0
+                          ? "text-white font-semibold"
+                          : productDetail.quantity <= 10
+                          ? "text-[#B12705] font-semibold"
+                          : "text-black"
+                      } text-[11px]`}
+                    >
+                      {productDetail.quantity === 0
+                        ? "Out of stock"
+                        : productDetail.quantity < 10
+                        ? "Only " +
+                          productDetail.quantity +
+                          " left in stock - order soon"
+                        : productDetail.quantity + " in stock"}
+                    </Text>
+                  </View>
                 </View>
                 <View className="w-full flex-row items-center justify-start mb-4 mt-3">
                   <FontAwesomeIcon
@@ -338,7 +352,7 @@ const ProductDetail = () => {
                     style={{ color: "#f59e0b" }}
                   />
                   <Text className="text-[19px] text-[#fb923c] font-semibold">
-                    {parseInt(productDetail.price).toLocaleString("en-US")}
+                    {parseInt(productDetail.price).toLocaleString("vi-VN")}
                   </Text>
                 </View>
               </View>
@@ -390,21 +404,23 @@ const ProductDetail = () => {
             <View className="w-full h-[4px] bg-gray-300 mt-5"></View>
             {reviews && (
               <View className="w-full h-fit">
-                <View className="w-full h-12 mt-2 border-b-[1px] border-solid border-gray-300 flex-row items-center justify-between px-4">
+                <View className="w-full h-12 mt-2 flex-row items-center justify-between px-4">
                   <Text className="font-semibold text-[14px]">{`Reviews (${totalReviews})`}</Text>
-                  <TouchableOpacity
-                    className="w-16 h-10 flex-row items-center justify-center"
-                    onPress={handleReviewPress}
-                  >
-                    <Text className="text-[14px] text-[#f59e0b] mr-1">
-                      See all
-                    </Text>
-                    <FontAwesomeIcon
-                      icon={icons.faChevronRight}
-                      size={12}
-                      style={{ color: "#f59e0b" }}
-                    />
-                  </TouchableOpacity>
+                  {reviews.length > 3 && (
+                    <TouchableOpacity
+                      className="w-16 h-10 flex-row items-center justify-center"
+                      onPress={handleReviewPress}
+                    >
+                      <Text className="text-[14px] text-[#f59e0b] mr-1">
+                        See all
+                      </Text>
+                      <FontAwesomeIcon
+                        icon={icons.faChevronRight}
+                        size={12}
+                        style={{ color: "#f59e0b" }}
+                      />
+                    </TouchableOpacity>
+                  )}
                 </View>
                 <View className="w-full h-fit">
                   {reviews.slice(0, 2).map((review) => (
@@ -417,19 +433,21 @@ const ProductDetail = () => {
                     />
                   ))}
                 </View>
-                <TouchableOpacity
-                  className="w-full h-10 flex-row items-center justify-center mt-1"
-                  onPress={handleReviewPress}
-                >
-                  <Text className="text-[14px] text-[#f59e0b] mr-1">
-                    See all
-                  </Text>
-                  <FontAwesomeIcon
-                    icon={icons.faChevronRight}
-                    size={12}
-                    style={{ color: "#f59e0b" }}
-                  />
-                </TouchableOpacity>
+                {reviews.length > 3 && (
+                  <TouchableOpacity
+                    className="w-full h-10 flex-row items-center justify-center mt-1"
+                    onPress={handleReviewPress}
+                  >
+                    <Text className="text-[14px] text-[#f59e0b] mr-1">
+                      See all
+                    </Text>
+                    <FontAwesomeIcon
+                      icon={icons.faChevronRight}
+                      size={12}
+                      style={{ color: "#f59e0b" }}
+                    />
+                  </TouchableOpacity>
+                )}
               </View>
             )}
             <View className="w-full h-[4px] bg-gray-300 mt-2"></View>
@@ -474,8 +492,11 @@ const ProductDetail = () => {
       {imageUrls && imageUrls.length > 0 ? (
         <View className="w-full h-16 flex-row items-start justify-end border-t-[0.5px] border-solid border-gray-200 bg-white">
           <TouchableOpacity
-            className="w-48 h-10 bg-[#f59e0b]  flex-row items-center justify-center"
+            className={`w-48 h-10 bg-[#f59e0b] flex-row items-center justify-center ${
+              productDetail.quantity === 0 ? "opacity-40" : ""
+            }`}
             onPress={handleAddToCart}
+            disabled={productDetail.quantity === 0}
           >
             <FontAwesomeIcon
               icon={icons.faCartShopping}
@@ -488,6 +509,16 @@ const ProductDetail = () => {
           </TouchableOpacity>
         </View>
       ) : null}
+      {isAddingToCart && (
+        <View className="w-full h-full bg-zinc-900/40 opacity-100 absolute top-0 bottom-0 z-[12] flex-row items-start justify-center">
+          <LottieView
+            style={{ width: 130, height: 130, marginTop: 270 }}
+            source={require("../../assets/lottie/shoppingCart.json")}
+            autoPlay
+            speed={1.4}
+          />
+        </View>
+      )}
     </View>
   );
 };

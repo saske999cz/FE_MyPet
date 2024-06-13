@@ -2,16 +2,12 @@ import {
   View,
   Text,
   TouchableOpacity,
-  Image,
-  ImageBackground,
   RefreshControl,
   FlatList,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { icons } from "../../constants";
-import { images } from "../../constants";
+import { icons, blurhash } from "../../constants";
 import { router } from "expo-router";
 import ItemCard from "../../components/ItemCard";
 import { useLocalSearchParams } from "expo-router";
@@ -19,6 +15,10 @@ import {
   get_best_selling_products_by_shop,
   get_all_category_type_with_amount_of_products_by_shop,
 } from "../../api/MarketApi";
+import { Image } from "expo-image";
+import LottieView from "lottie-react-native";
+import { FIREBASE_STORAGE } from "../../firebaseConfig";
+import { getDownloadURL, ref } from "firebase/storage";
 
 const Shop = () => {
   const {
@@ -26,11 +26,10 @@ const Shop = () => {
     shopName,
     shopAddress,
     shopAvatar,
-    shopPhone,
-    shopEstablished,
+    shopRating,
     workTime,
+    shopPhone,
     shopWebsite,
-    shopFanpage,
     shopDescription,
   } = useLocalSearchParams();
   const [products, setProducts] = useState([]);
@@ -41,6 +40,7 @@ const Shop = () => {
   const [categories, setCategories] = useState(null);
   const [shopImage, setShopImage] = useState(null);
   const [page, setPage] = useState(1);
+  const [flags, setFlags] = useState([]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -82,6 +82,7 @@ const Shop = () => {
                 return unique;
               }, []);
               setProducts(uniqueProducts);
+              setFlags((prev) => [...prev, true]);
             }
           })
           .catch((error) => console.error("Error fetching products:", error));
@@ -94,21 +95,48 @@ const Shop = () => {
   }, [page]);
 
   useEffect(() => {
-    const encodedShopAvatar = shopAvatar.replace("/shop/", "%2Fshop%2F");
-    setShopImage(encodedShopAvatar);
+    const fetchShopAvatar = async () => {
+      try {
+        const shopAvatarRef = ref(FIREBASE_STORAGE, shopAvatar);
+        const shopUrl = await getDownloadURL(shopAvatarRef);
+        setShopImage(shopUrl);
+        setFlags((prev) => [...prev, true]);
+      } catch (error) {
+        console.error("Error fetching shop avatar:", error);
+      }
+    };
     const fetchCategories = async () => {
       try {
         get_all_category_type_with_amount_of_products_by_shop(shopId)
-          .then((res) => setCategories(res.data.data.dog))
+          .then((res) => {
+            setCategories(res.data.data.dog);
+            setFlags((prev) => [...prev, true]);
+          })
           .catch((error) => console.error("Error fetching categories:", error));
       } catch (error) {
         console.error("Error fetching categories:", error);
       }
     };
     fetchCategories();
+    fetchShopAvatar();
   }, []);
 
-  return (
+  useEffect(() => {
+    if (flags.length === 3 && flags.every((flag) => flag === true)) {
+      setIsLoading(false);
+    }
+  }, [flags]);
+
+  return isLoading ? (
+    <View className="w-full h-full flex-row item-start justify-center">
+      <LottieView
+        source={require("../../assets/lottie/loading.json")}
+        autoPlay
+        loop
+        style={{ width: 130, height: 130, marginTop: 300 }}
+      />
+    </View>
+  ) : (
     <View className="h-full w-full">
       <View className="w-full h-44">
         <TouchableOpacity
@@ -122,10 +150,10 @@ const Shop = () => {
           />
         </TouchableOpacity>
         {shopImage && (
-          <ImageBackground
+          <Image
             source={{ uri: shopImage }}
             className="w-full h-full object-center"
-            resizeMode="cover"
+            contentFit="cover"
           />
         )}
         <View className="w-full h-full opacity-[50] bg-zinc-900/40 absolute bottom-0 left-0 top-0 right-0"></View>
@@ -135,6 +163,8 @@ const Shop = () => {
               <Image
                 source={{ uri: shopImage }}
                 className="w-full h-full rounded-full"
+                placeholder={{ blurhash }}
+                transition={0}
               />
             )}
           </View>

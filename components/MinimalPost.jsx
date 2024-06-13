@@ -1,9 +1,10 @@
-import { View, Text, Image, Touchable, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../constants";
 import { router } from "expo-router";
 import DynamicImageGrid from "./DynamicImageGrid";
+import { Image } from "expo-image";
 
 const MinimalPost = ({
   id,

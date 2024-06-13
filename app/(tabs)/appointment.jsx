@@ -5,6 +5,7 @@ import {
   RefreshControl,
   Animated,
   FlatList,
+  Modal,
 } from "react-native";
 import React, { useState, useRef, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,16 +13,25 @@ import { icons, blurhash, images } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import MedicalCenterCard from "../../components/MedicalCenterCard";
 import SearchInput from "../../components/SearchInput";
-import { get_highest_rating_medical_centers } from "../../api/MedicalCenterApi";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  get_highest_rating_medical_centers,
+  search_medical_centers,
+} from "../../api/MedicalCenterApi";
 import { Image } from "expo-image";
 import LottieView from "lottie-react-native";
+import { useGlobalContext } from "../../state/GlobalContextProvider";
 
 const Header_Max_Height = 144;
 const Header_Min_Height = 70;
 const Scroll_Distance = Header_Max_Height - Header_Min_Height;
 
-const DynamicHeader = ({ value, isScrolled }) => {
+const DynamicHeader = ({
+  value,
+  isScrolled,
+  query,
+  setQuery,
+  handleSearch,
+}) => {
   const animatedHeaderHeight = value.interpolate({
     inputRange: [0, Scroll_Distance],
     outputRange: [Header_Max_Height, Header_Min_Height],
@@ -49,28 +59,28 @@ const DynamicHeader = ({ value, isScrolled }) => {
     transform: [
       {
         translateX: value.interpolate({
-          inputRange: [0, 60],
-          outputRange: [0, -80],
+          inputRange: [0, Scroll_Distance - 40],
+          outputRange: [0, -55],
           extrapolate: "clamp",
         }),
       },
       {
         scaleX: value.interpolate({
           inputRange: [0, Scroll_Distance - 40],
-          outputRange: [1, 0.7],
+          outputRange: [1, 0.68],
           extrapolate: "clamp",
         }),
       },
       {
         translateY: value.interpolate({
           inputRange: [0, 50],
-          outputRange: [4, -20],
+          outputRange: [4, -11],
           extrapolate: "clamp",
         }),
       },
     ],
     opacity: value.interpolate({
-      inputRange: [0, 70],
+      inputRange: [0, 45],
       outputRange: [1, 0],
       extrapolate: "clamp",
     }),
@@ -87,7 +97,7 @@ const DynamicHeader = ({ value, isScrolled }) => {
       {
         translateY: value.interpolate({
           inputRange: [0, Scroll_Distance],
-          outputRange: [3, -31],
+          outputRange: [-1, -31],
           extrapolate: "clamp",
         }),
       },
@@ -127,6 +137,9 @@ const DynamicHeader = ({ value, isScrolled }) => {
             title="Search"
             placeholder="Search"
             otherStyles={"w-[88%]"}
+            value={query}
+            onChangeText={(text) => setQuery(text)}
+            handleSearch={handleSearch}
           />
           <Animated.View
             className="w-10 h-10 rounded-lg ml-2"
@@ -150,6 +163,9 @@ const DynamicHeader = ({ value, isScrolled }) => {
               title="Search"
               placeholder="Search"
               otherStyles={"w-[62%] absolute top-0 left-0 -ml-4 -mt-9"}
+              value={query}
+              onChangeText={(text) => setQuery(text)}
+              handleSearch={handleSearch}
             />
           </Animated.View>
         )}
@@ -159,21 +175,41 @@ const DynamicHeader = ({ value, isScrolled }) => {
 };
 
 const apointment = () => {
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const { userLocation, userLocationData, userAvatar } = useGlobalContext();
   const [refreshing, setRefreshing] = useState(false);
-  const [activeCategory, setActiveCategory] = useState("none");
   const [isScrolled, setIsScrolled] = useState(false);
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
   const [clinics, setClinics] = useState([]);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [query, setQuery] = useState("");
+  const [maxPage, setMaxPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
   const onRefresh = async () => {
     setRefreshing(true);
     // fetch data
     setRefreshing(false);
   };
 
+  const handleSearch = () => {
+    if (query === "") {
+      setClinics([]);
+      setIsLoading(true);
+      setSearching(false);
+      setPage(1);
+      return;
+    }
+    setClinics([]);
+    setIsLoading(true);
+    setSearching(true);
+    setPage(1);
+  };
+
   const handleLoadMore = () => {
+    if (page >= maxPage) {
+      return;
+    }
     setPage((prevPage) => prevPage + 1);
   };
 
@@ -191,10 +227,10 @@ const apointment = () => {
   }, []);
 
   useEffect(() => {
-    const fetchClinics = async () => {
-      try {
-        get_highest_rating_medical_centers(page, 10).then((res) => {
-          if (res && res.status === 200) {
+    if (searching) {
+      search_medical_centers(query, page, 10)
+        .then((res) => {
+          if (res && res.status === 200 && res.data.data.length > 0) {
             const newClinics = [...clinics, ...res.data.data];
             const uniqueClinics = newClinics.reduce((unique, clinic) => {
               if (
@@ -207,48 +243,98 @@ const apointment = () => {
               return unique;
             }, []);
             setClinics(uniqueClinics);
+            if (page === 1) {
+              setMaxPage(res.data.total_pages);
+            }
+            setIsLoading(false);
+          } else {
+            setClinics([]);
             setIsLoading(false);
           }
+        })
+        .catch((err) => {
+          alert(err.message);
         });
-      } catch (error) {
-        console.error("Error fetching similar products:", error);
-      }
-    };
-    fetchClinics();
-  }, [page]);
-
-  useEffect(() => {
-    const getUserAvatar = async () => {
-      const userAvatar = await AsyncStorage.getItem("userAvatar");
-      setAvatarUrl(userAvatar);
-    };
-
-    getUserAvatar();
-  }, []);
+    } else
+      get_highest_rating_medical_centers(page, 10)
+        .then((res) => {
+          if (res && res.status === 200 && res.data.data.length > 0) {
+            const newClinics = [...clinics, ...res.data.data];
+            const uniqueClinics = newClinics.reduce((unique, clinic) => {
+              if (
+                !unique.find(
+                  (item) => item.medical_center_id === clinic.medical_center_id
+                )
+              ) {
+                unique.push(clinic);
+              }
+              return unique;
+            }, []);
+            setClinics(uniqueClinics);
+            if (page === 1) {
+              setMaxPage(res.data.total_pages);
+            }
+            setIsLoading(false);
+          } else {
+            setClinics([]);
+            setIsLoading(false);
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching clinics:", err);
+        });
+  }, [page, searching]);
 
   return (
     <SafeAreaView className="h-full flex-col">
-      <SafeAreaView className="flex-row items-center w-[25%] justify-around absolute top-0 right-0 z-50 mr-10 mt-[14px]">
-        <View className="w-28 h-10 flex-row items-center justify-center mr-12">
-          <Text className="text-[12px] font-semibold mr-1 mt-1">
-            Da Nang, VN
-          </Text>
-          <FontAwesomeIcon
-            icon={icons.faLocationDot}
-            size={20}
-            style={{ color: "#ef4444" }}
-          />
-        </View>
-        {avatarUrl && (
+      <SafeAreaView className="flex-row h-fit items-center w-[30%] justify-end absolute top-0 right-0 mr-4 z-50 mt-[16px]">
+        {userLocation ? (
+          <TouchableOpacity
+            className="w-24 h-8 flex-row items-center justify-center mr-[7px]"
+            onPress={() => setShowModal(true)}
+          >
+            <Text
+              className="text-[12px] font-semibold mt-1"
+              ellipsizeMode="tail"
+              numberOfLines={1}
+            >
+              {userLocation.length > 13
+                ? userLocation.substring(0, 13)
+                : userLocation}
+            </Text>
+            <FontAwesomeIcon
+              icon={icons.faLocationDot}
+              size={20}
+              style={{ color: "#ef4444" }}
+            />
+          </TouchableOpacity>
+        ) : (
+          <View className="w-28 h-10 flex-row items-center justify-center">
+            <LottieView
+              style={{ width: 55, height: 55 }}
+              source={require("../../assets/lottie/globe.json")}
+              autoPlay
+              loop
+              speed={1.5}
+            />
+          </View>
+        )}
+        {userAvatar && (
           <Image
-            source={{ uri: avatarUrl }}
+            source={{ uri: userAvatar }}
             className="w-9 h-9 rounded-full"
             transition={0}
             placeholder={{ blurhash }}
           />
         )}
       </SafeAreaView>
-      <DynamicHeader value={scrollOffsetY} isScrolled={isScrolled} />
+      <DynamicHeader
+        value={scrollOffsetY}
+        isScrolled={isScrolled}
+        query={query}
+        setQuery={setQuery}
+        handleSearch={handleSearch}
+      />
       {isLoading ? (
         <View className="w-full h-full flex-row items-start justify-center">
           <LottieView
@@ -261,6 +347,7 @@ const apointment = () => {
         </View>
       ) : clinics && clinics.length > 0 ? (
         <FlatList
+          scrollEventThrottle={8}
           data={clinics}
           keyExtractor={(item) => item.medical_center_id}
           renderItem={({ item }) => (
@@ -294,8 +381,8 @@ const apointment = () => {
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           viewabilityConfig={{
-            itemVisiblePercentThreshold: 80,
-            minimumViewTime: 300,
+            itemVisiblePercentThreshold: 20,
+            minimumViewTime: 250,
           }}
         />
       ) : (
@@ -307,6 +394,30 @@ const apointment = () => {
           />
         </View>
       )}
+      <Modal visible={showModal} animationType="fade" transparent={true}>
+        <TouchableOpacity
+          className="flex-1 bg-zinc-900/40 opacity-100 h-full w-full flex-row items-center justify-center"
+          onPress={() => setShowModal(false)}
+        >
+          <View className="w-80 flex-col h-24 items-center justify-center bg-white rounded-md">
+            <View className="w-full h-[45%] flex-row items-center justify-center mt-2">
+              <FontAwesomeIcon
+                icon={icons.faLocationDot}
+                size={20}
+                style={{ color: "#ef4444" }}
+              />
+              <Text className="text-[13px] text-gray-600 font-medium ml-1">
+                Current location:
+              </Text>
+            </View>
+            <View className="w-full h-[45%] flex-row items-center justify-center">
+              <Text className="text-[13px] text-gray-600 font-medium">
+                {userLocationData}
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };

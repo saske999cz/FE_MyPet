@@ -19,13 +19,21 @@ import {
 import FormField from "../../components/FormField";
 import * as ImagePicker from "expo-image-picker";
 import DynamicImageGrid from "../../components/DynamicImageGrid";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FIREBASE_STORAGE } from "../../firebaseConfig";
 import { getDownloadURL, ref } from "firebase/storage";
 import { Image } from "expo-image";
+import { useGlobalContext } from "../../state/GlobalContextProvider";
+import { get_current_cart, create_cart } from "../../api/CartApi";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Home = () => {
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const {
+    userAvatar,
+    setUserAvatar,
+    setCartLength,
+    setCartId,
+    setCurrentCartItems,
+  } = useGlobalContext();
   const [refreshing, setRefreshing] = useState(false);
   const bottomSheetModalRef = useRef(null);
   const snapPoints = ["90%"];
@@ -46,7 +54,7 @@ const Home = () => {
       allowsMultipleSelection: true,
     });
 
-    if (!result.cancelled) {
+    if (!result.canceled) {
       setImageList(result.assets.map((asset) => asset.uri));
     }
   };
@@ -76,14 +84,58 @@ const Home = () => {
   );
 
   useEffect(() => {
-    const getUserAvatar = async () => {
-      const userAvatar = await AsyncStorage.getItem("userAvatar");
-      const avatarRef = ref(FIREBASE_STORAGE, userAvatar);
-      const url = await getDownloadURL(avatarRef);
-      setAvatarUrl(url);
-      AsyncStorage.setItem("userAvatar", url);
+    const fetchUserCart = async () => {
+      const res = await get_current_cart();
+      if (res && res.status === 200) {
+        setCartLength(
+          res.data.shops.reduce(
+            (total, shop) => total + shop.cart_items.length,
+            0
+          )
+        );
+        setCartId(res.data.cart.id);
+        const combinedItemIds = res.data.shops.reduce((ids, shop) => {
+          const shopItemIds = shop.cart_items.map((item) => item.product_id);
+          return ids.concat(shopItemIds);
+        }, []);
+        setCurrentCartItems(combinedItemIds);
+      } else {
+        const res = await create_cart();
+        if (res && res.status === 200) {
+          setCartLength(
+            res.data.shops.reduce(
+              (total, shop) => total + shop.cart_items.length,
+              0
+            )
+          );
+          setCartId(res.data.cart.id);
+          const combinedItemIds = res.data.shops.reduce((ids, shop) => {
+            const shopItemIds = shop.cart_items.map((item) => item.product_id);
+            return ids.concat(shopItemIds);
+          }, []);
+          setCurrentCartItems(combinedItemIds);
+        } else {
+          setCartLength(0);
+          setCartId(res.data.cart.id);
+        }
+      }
     };
+    fetchUserCart();
+  }, []);
 
+  useEffect(() => {
+    const getUserAvatar = async () => {
+      const localAvatar = await AsyncStorage.getItem("userAvatar");
+      if (localAvatar) {
+        setUserAvatar(localAvatar);
+        return;
+      } else {
+        const avatarRef = ref(FIREBASE_STORAGE, userAvatar);
+        const url = await getDownloadURL(avatarRef);
+        setUserAvatar(url);
+        await AsyncStorage.setItem("userAvatar", url);
+      }
+    };
     getUserAvatar();
   }, []);
 
@@ -109,12 +161,14 @@ const Home = () => {
                 />
               </TouchableOpacity>
 
-              <Image
-                source={{ uri: avatarUrl }}
-                className="w-9 h-9 rounded-full"
-                transition={0}
-                placeholder={{ blurhash }}
-              />
+              {userAvatar && (
+                <Image
+                  source={{ uri: userAvatar }}
+                  className="w-9 h-9 rounded-full"
+                  transition={0}
+                  placeholder={{ blurhash }}
+                />
+              )}
             </View>
           </View>
           <FlashList

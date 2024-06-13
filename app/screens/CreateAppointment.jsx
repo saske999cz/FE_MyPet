@@ -3,14 +3,11 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Image,
   Dimensions,
 } from "react-native";
-import React, { useState, useEffect } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { icons } from "../../constants";
-import { images } from "../../constants";
+import { images, blurhash, icons } from "../../constants";
 import { router } from "expo-router";
 import FormField from "../../components/FormField";
 import PetDropDownBox from "../../components/PetDropDownBox";
@@ -26,6 +23,7 @@ import { useLocalSearchParams } from "expo-router";
 import LottieView from "lottie-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useGlobalContext } from "../../state/GlobalContextProvider";
+import { Image } from "expo-image";
 
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
@@ -399,7 +397,8 @@ const ScreenControler = ({
 };
 
 const CreateAppointment = () => {
-  const { medicalCenterId } = useLocalSearchParams();
+  const { medicalCenterId, medicalCenterName, medicalCenterImage } =
+    useLocalSearchParams();
   const [appointmentData, setAppointmentData] = useState({
     start_time: "",
     date: "",
@@ -420,11 +419,13 @@ const CreateAppointment = () => {
   const [error, setError] = useState({});
   const [isSending, setIsSending] = useState(false);
   const { setToast } = useGlobalContext();
-
+  const [currentProccessText, setCurrentProccessText] = useState(". . .");
   const [currentStep, setCurrentStep] = useState(1);
+  const intervalRef = useRef(null);
   const handleBack = () => {
     router.back();
   };
+  const [avatar, setAvatar] = useState(null);
 
   const handleNext = () => {
     let newErrors = {}; // Temporary object to accumulate errors
@@ -457,8 +458,30 @@ const CreateAppointment = () => {
     setCurrentStep(currentStep - 1);
   };
 
+  const startAnimation = () => {
+    if (!intervalRef.current) {
+      // Check if already running
+      intervalRef.current = setInterval(() => {
+        setCurrentProccessText((prevText) => {
+          if (prevText === ". . .") return ".";
+          return prevText + " .";
+        });
+      }, 200);
+    }
+  };
+
+  const stopAnimation = () => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+  };
+
+  useEffect(() => {
+    return () => clearInterval(intervalRef.current); // Cleanup on unmount
+  }, []);
+
   const handleCreateAppointment = () => {
     setIsSending(true);
+    startAnimation();
   };
 
   useEffect(() => {
@@ -468,17 +491,19 @@ const CreateAppointment = () => {
         if (res && res.status === 201) {
           setTimeout(() => {
             setIsSending(false);
-            router.replace("../(tabs)/appointment");
+            stopAnimation();
             setToast({
               type: "success",
               text1: "Success",
               text2: "New appointment created successfully!",
             });
           }, 800);
+          router.replace("../(tabs)/appointment");
           return;
         } else {
           alert(`An error occured, please try again`);
           setIsSending(false);
+          stopAnimation();
         }
       } catch (error) {
         console.log(error);
@@ -490,6 +515,11 @@ const CreateAppointment = () => {
   }, [isSending]);
 
   useEffect(() => {
+    const encodedClinicAvatar = medicalCenterImage.replace(
+      "/medical_center/",
+      "%2Fmedical_center%2F"
+    );
+    setAvatar(encodedClinicAvatar);
     const fetchCustomerId = async () => {
       try {
         const customerId = await AsyncStorage.getItem("userId");
@@ -503,8 +533,9 @@ const CreateAppointment = () => {
 
   return (
     <View className="flex-1 items-center">
-      {isSending ? (
-        <View className="w-full h-full bg-black opacity-90 flex-row items-start justify-center">
+      {isSending && (
+        <View className="w-full h-full flex-row items-start justify-center absolute top-0 bottom-0 z-[12]">
+          <View className="w-full h-full bg-zinc-900/40 opacity-100 absolute top-0 bottom-0"></View>
           <LottieView
             style={{ width: 240, height: 240, marginTop: 250 }}
             source={require("../../assets/lottie/sendingData.json")}
@@ -512,117 +543,127 @@ const CreateAppointment = () => {
             loop
             speed={1.5}
           />
-        </View>
-      ) : (
-        <View className="w-full h-full">
-          <View className="w-full h-12 flex-row items-center justify-center mt-12">
-            <TouchableOpacity
-              className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
-              onPress={handleBack}
-            >
-              <FontAwesomeIcon
-                icon={icons.faArrowLeftLong}
-                size={20}
-                style={{ color: "#f59e0b" }}
-              />
-            </TouchableOpacity>
-            <Text className="text-[16px] font-semibold">
-              Create Appointment
-            </Text>
-          </View>
-          <ScrollView className={`flex-1 w-full`}>
-            <View
-              className={`w-[${formWidth}] h-full items-center justify-center mb-8`}
-            >
-              <View className="w-[95%] h-16 bg-white rounded-lg">
-                <View className="w-full h-[8%] bg-amber-400 rounded-t-lg"></View>
-                <View className="w-full h-[92%] flex-row items-center justify-start px-4">
-                  <Image
-                    source={images.clinic1}
-                    className="w-12 h-12 rounded-full"
-                  />
-                  <Text className="text-[15px] font-semibold text-black ml-2">
-                    Pet Clinic
-                  </Text>
-                </View>
-              </View>
-              <View className="w-[95%] h-fit bg-white rounded-lg flex-col items-center mt-2 justify-start">
-                <StepperBar steps={[1, 2, 3]} currentStep={currentStep} />
-                <ScreenControler
-                  currentStep={currentStep}
-                  appointmentData={appointmentData}
-                  setAppointmentData={setAppointmentData}
-                  selectedTime={selectedTime}
-                  setSelectedTime={setSelectedTime}
-                  selectedPet={selectedPet}
-                  setSelectedPet={setSelectedPet}
-                  selectedPetImage={selectedPetImage}
-                  setSelectedPetImage={setSelectedPetImage}
-                  setSelectedDoctor={setSelectedDoctor}
-                  setSelectedDoctorImage={setSelectedDoctorImage}
-                  selectedDoctor={selectedDoctor}
-                  selectedDoctorImage={selectedDoctorImage}
-                  selectedDate={selectedDate}
-                  setSelectedDate={setSelectedDate}
-                  availableTime={availableTime}
-                  setAvailableTime={setAvailableTime}
-                  error={error}
-                  setError={setError}
-                />
-                <View
-                  className={`w-full h-16 flex-row items-center justify-center px-4 mb-2 z-[6] ${
-                    currentStep === 2 ? "mt-2" : "mt-2"
-                  }`}
-                >
-                  {currentStep !== 1 && (
-                    <TouchableOpacity
-                      className="w-20 h-10 rounded-md border-[0.5px] border-solid border-gray-200 flex-row items-center justify-center mr-4"
-                      disabled={currentStep === 1 ? true : false}
-                      onPress={handlePrev}
-                    >
-                      <FontAwesomeIcon
-                        icon={icons.faArrowLeftLong}
-                        size={12}
-                        style={{ color: "#f59e0b" }}
-                      />
-                      <Text className="text-[14px] font-semibold text-gray-500 ml-1">
-                        Prev
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  {currentStep !== 3 && (
-                    <TouchableOpacity
-                      className="w-20 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-2"
-                      onPress={handleNext}
-                      disabled={currentStep === 3 ? true : false}
-                    >
-                      <Text className="text-[14px] font-semibold text-white mr-1">
-                        Next
-                      </Text>
-                      <FontAwesomeIcon
-                        icon={icons.faArrowRightLong}
-                        size={12}
-                        style={{ color: "#ffffff" }}
-                      />
-                    </TouchableOpacity>
-                  )}
-                  {currentStep === 3 && (
-                    <TouchableOpacity
-                      className="w-28 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-4"
-                      onPress={handleCreateAppointment}
-                      disabled={currentStep !== 3 ? true : false}
-                    >
-                      <Text className="text-[14px] font-semibold text-white">
-                        Create
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
+          <View className="w-full h-fit absolute top-[440px] flex-row items-center justify-center">
+            <View className="w-fit h-fit flex-row items-center justify-end">
+              <Text className="text-white text-[14px] font-semibold">
+                Creating new appointment
+              </Text>
             </View>
-          </ScrollView>
+            <View className="w-7 h-fit flex-row items-center justify-start">
+              <Text className="text-white text-[14px] font-semibold ">
+                {currentProccessText}
+              </Text>
+            </View>
+          </View>
         </View>
       )}
+      <View className="w-full h-full">
+        <View className="w-full h-12 flex-row items-center justify-center mt-12">
+          <TouchableOpacity
+            className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
+            onPress={handleBack}
+          >
+            <FontAwesomeIcon
+              icon={icons.faArrowLeftLong}
+              size={20}
+              style={{ color: "#f59e0b" }}
+            />
+          </TouchableOpacity>
+          <Text className="text-[16px] font-semibold">Create Appointment</Text>
+        </View>
+        <ScrollView className={`flex-1 w-full`}>
+          <View
+            className={`w-[${formWidth}] h-full items-center justify-center mb-8`}
+          >
+            <View className="w-[95%] h-16 bg-white rounded-lg">
+              <View className="w-full h-[8%] bg-amber-400 rounded-t-lg"></View>
+              <View className="w-full h-[92%] flex-row items-center justify-start px-4">
+                <Image
+                  source={{ uri: avatar }}
+                  className="w-12 h-12 rounded-full"
+                  placeholder={{ blurhash }}
+                />
+                <Text className="text-[15px] font-semibold text-black ml-2">
+                  {medicalCenterName}
+                </Text>
+              </View>
+            </View>
+            <View className="w-[95%] h-fit bg-white rounded-lg flex-col items-center mt-2 justify-start">
+              <StepperBar steps={[1, 2, 3]} currentStep={currentStep} />
+              <ScreenControler
+                currentStep={currentStep}
+                appointmentData={appointmentData}
+                setAppointmentData={setAppointmentData}
+                selectedTime={selectedTime}
+                setSelectedTime={setSelectedTime}
+                selectedPet={selectedPet}
+                setSelectedPet={setSelectedPet}
+                selectedPetImage={selectedPetImage}
+                setSelectedPetImage={setSelectedPetImage}
+                setSelectedDoctor={setSelectedDoctor}
+                setSelectedDoctorImage={setSelectedDoctorImage}
+                selectedDoctor={selectedDoctor}
+                selectedDoctorImage={selectedDoctorImage}
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+                availableTime={availableTime}
+                setAvailableTime={setAvailableTime}
+                error={error}
+                setError={setError}
+              />
+              <View
+                className={`w-full h-16 flex-row items-center justify-center px-4 mb-2 z-[6] ${
+                  currentStep === 2 ? "mt-2" : "mt-2"
+                }`}
+              >
+                {currentStep !== 1 && (
+                  <TouchableOpacity
+                    className="w-20 h-10 rounded-md border-[0.5px] border-solid border-gray-200 flex-row items-center justify-center mr-4"
+                    disabled={currentStep === 1 ? true : false}
+                    onPress={handlePrev}
+                  >
+                    <FontAwesomeIcon
+                      icon={icons.faArrowLeftLong}
+                      size={12}
+                      style={{ color: "#f59e0b" }}
+                    />
+                    <Text className="text-[14px] font-semibold text-gray-500 ml-1">
+                      Prev
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {currentStep !== 3 && (
+                  <TouchableOpacity
+                    className="w-20 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-2"
+                    onPress={handleNext}
+                    disabled={currentStep === 3 ? true : false}
+                  >
+                    <Text className="text-[14px] font-semibold text-white mr-1">
+                      Next
+                    </Text>
+                    <FontAwesomeIcon
+                      icon={icons.faArrowRightLong}
+                      size={12}
+                      style={{ color: "#ffffff" }}
+                    />
+                  </TouchableOpacity>
+                )}
+                {currentStep === 3 && (
+                  <TouchableOpacity
+                    className="w-28 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-4"
+                    onPress={handleCreateAppointment}
+                    disabled={currentStep !== 3 ? true : false}
+                  >
+                    <Text className="text-[14px] font-semibold text-white">
+                      Create
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </View>
     </View>
   );
 };
