@@ -68,6 +68,8 @@ import logout from "../assets/images/logout.png";
 import checklist from "../assets/images/checklist.png";
 import simple_background from "../assets/images/simple_background.jpg";
 import cod from "../assets/images/cod.png";
+import myreview from "../assets/images/myreview.png";
+import request from "../assets/images/request.png";
 
 export default {
   profile,
@@ -140,4 +142,6 @@ export default {
   checklist,
   simple_background,
   cod,
+  myreview,
+  request,
 };

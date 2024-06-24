@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet } from "react-native";
 import React from "react";
 import { Stack } from "expo-router";
 
@@ -37,6 +37,21 @@ const ScreensLayout = () => {
       "SimilarClinics",
       "BasicAccountInfo",
       "EditPetInfo",
+      "MakeReview",
+      "MyReview",
+      "Notifications",
+      "DoctorReview",
+      "ProductReview",
+      "ReviewDetail",
+      "CustomMap",
+      "ShopReview",
+      "MedicalCenterReview",
+      "AllMedicalCenterReviews",
+      "AllShopReviews",
+      "SimilarPets",
+      "PostPhotos",
+      "MyAdoptionRequest",
+      "AdoptionRequestDetail",
     ];
 
     return screenList.map((screen) => {

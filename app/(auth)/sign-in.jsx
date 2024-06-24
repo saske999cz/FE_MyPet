@@ -51,12 +51,15 @@ const SignIn = () => {
         .then((res) => {
           if (res && res.status === 200) {
             AsyncStorage.setItem("token", res.data.access_token);
+            AsyncStorage.setItem("userName", res.data.user.username);
+            AsyncStorage.setItem("userId", res.data.user.id.toString());
+            AsyncStorage.setItem("userEmail", res.data.user.email);
+            AsyncStorage.setItem("userFullName", res.data.user.full_name);
             setUserName(res.data.user.username);
             setUserAvatar(res.data.user.avatar);
             setUserId(res.data.user.id);
             setUserEmail(res.data.user.email);
             setUserFullName(res.data.user.full_name);
-            console.log("Full name", res.data.user.full_name);
             ApiManager.defaults.headers.common[
               "Authorization"
             ] = `Bearer ${res.data.access_token}`;

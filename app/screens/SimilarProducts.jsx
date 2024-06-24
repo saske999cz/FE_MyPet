@@ -1,26 +1,26 @@
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   RefreshControl,
   FlatList,
 } from "react-native";
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
-import { images } from "../../constants";
 import { useLocalSearchParams } from "expo-router";
 import ItemCard from "../../components/ItemCard";
 import { get_best_selling_products_by_category } from "../../api/MarketApi";
+import LottieView from "lottie-react-native";
 
 const SimilarProducts = () => {
   const { categoryId } = useLocalSearchParams();
   const [refreshing, setRefreshing] = useState(false);
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -49,11 +49,13 @@ const SimilarProducts = () => {
                 return unique;
               }, []);
               setProducts(uniqueProducts);
+              setIsLoading(false);
             }
           }
         );
       } catch (error) {
         console.error("Error fetching similar products:", error);
+        setIsLoading(false);
       }
     };
     fetchProducts();
@@ -74,40 +76,52 @@ const SimilarProducts = () => {
         </TouchableOpacity>
         <Text className="font-bold text-[16px]">Similar Products</Text>
       </View>
-      <FlatList
-        scrollEventThrottle={2}
-        data={products}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View className="w-[47%] h-fit">
-            <ItemCard
-              id={item.id}
-              title={item.name}
-              price={item.price}
-              image={item.image}
-              rating={item.rating}
-              soldUnits={item.sold_quantity}
-              shop={item.shop}
-              isHorizontal={false}
-            />
-          </View>
-        )}
-        numColumns={2}
-        columnWrapperStyle={{
-          justifyContent: "space-around",
-        }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        estimatedItemSize={500}
-        showsVerticalScrollIndicator={false}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        viewabilityConfig={{
-          itemVisiblePercentThreshold: 80,
-          minimumViewTime: 300,
-        }}
-      />
+      {isLoading ? (
+        <View className="w-full h-full flex-row items-start justify-center">
+          <LottieView
+            style={{ width: 130, height: 130, marginTop: 150 }}
+            source={require("../../assets/lottie/loading.json")}
+            autoPlay
+            loop
+            speed={2}
+          />
+        </View>
+      ) : (
+        <FlatList
+          scrollEventThrottle={2}
+          data={products}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View className="w-[47%] h-fit">
+              <ItemCard
+                id={item.id}
+                title={item.name}
+                price={item.price}
+                image={item.image}
+                rating={item.rating}
+                soldUnits={item.sold_quantity}
+                shop={item.shop}
+                isHorizontal={false}
+              />
+            </View>
+          )}
+          numColumns={2}
+          columnWrapperStyle={{
+            justifyContent: "space-around",
+          }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          estimatedItemSize={500}
+          showsVerticalScrollIndicator={false}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          viewabilityConfig={{
+            itemVisiblePercentThreshold: 80,
+            minimumViewTime: 300,
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 };

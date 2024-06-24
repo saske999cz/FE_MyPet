@@ -1,24 +1,48 @@
-import { View, Text, Image, TouchableOpacity } from "react-native";
-import React, { useState, useRef, useCallback } from "react";
+import { View, Text, TouchableOpacity, FlatList } from "react-native";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
-import { images } from "../../constants";
 import { useLocalSearchParams } from "expo-router";
-import { UserDummy } from "../../dummy/FakeData";
+import { search_profile_by_username } from "../../api/BlogApi";
+import UserSearchCard from "../../components/UserSearchCard";
+import LottieView from "lottie-react-native";
 
 const UserSearchResult = () => {
   const { query } = useLocalSearchParams();
-  const users = UserDummy.filter((user) =>
-    user.username.toLowerCase().includes(query.toLowerCase())
-  );
-  const listSize = users.length;
+  const [users, setUsers] = useState([]);
+  const [page, setPage] = useState(1);
+  const [maxPage, setMaxPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleBack = () => {
     router.back();
   };
+
+  const handleLoadMore = () => {
+    if (page < maxPage) setPage((prevPage) => prevPage + 1);
+  };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      search_profile_by_username(query, page, 20).then((res) => {
+        if (res && res.status === 200) {
+          const newUsers = [...users, ...res.data.data];
+          const uniqueUsers = newUsers.reduce((unique, user) => {
+            if (!unique.find((item) => item.account_id === user.account_id)) {
+              unique.push(user);
+            }
+            return unique;
+          }, []);
+          setUsers(uniqueUsers);
+          setMaxPage(res.data.total_pages);
+          setIsLoading(false);
+        }
+      });
+    };
+    fetchUsers();
+  }, [page]);
 
   return (
     <SafeAreaView className="h-full w-full">
@@ -35,31 +59,32 @@ const UserSearchResult = () => {
         </TouchableOpacity>
         <Text className="font-bold text-[16px]">Search Results</Text>
       </View>
-      <FlashList
-        data={users}
-        renderItem={({ item }) => (
-          <TouchableOpacity className="w-full h-12 flex-row items-center justify-start px-3 mt-4 mb-4">
-            <View className="w-12 h-12 rounded-full border-[0.5px] border-solid border-gray-200">
-              <Image
-                source={item.avatar}
-                className="w-full h-full rounded-full"
-              />
-            </View>
-            <View className="w-[80%] h-fit flex-col items-start justify-start ml-2">
-              <View className="w-full h-fit flex-row items-center justify-start">
-                <Text className="text-[15px] font-semibold">
-                  {item.username}
-                </Text>
-              </View>
-              <View className="w-full h-fit flex-row items-center justify-start">
-                <Text className="text-[13px]">{item.name}</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-        keyExtractor={(item) => item.id}
-        estimatedItemSize={listSize}
-      />
+      {isLoading ? (
+        <View className="w-full h-full flex-row items-start justify-center">
+          <LottieView
+            style={{ width: 120, height: 120, marginTop: 150 }}
+            source={require("../../assets/lottie/loading.json")}
+            autoPlay
+            loop
+            speed={2}
+          />
+        </View>
+      ) : (
+        <FlatList
+          data={users}
+          renderItem={({ item }) => (
+            <UserSearchCard
+              id={item.account_id}
+              username={item.username}
+              avatar={item.avatar}
+              email={item.email}
+            />
+          )}
+          keyExtractor={(item) => item.id}
+          initialNumToRender={20}
+          onEndReached={handleLoadMore}
+        />
+      )}
     </SafeAreaView>
   );
 };

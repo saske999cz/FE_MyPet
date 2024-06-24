@@ -14,6 +14,7 @@ const MedicalCenterCard = ({
   name,
   rating,
   distance,
+  address,
   workingHours,
   telephone,
   description,
@@ -33,6 +34,7 @@ const MedicalCenterCard = ({
         medicalCenterTelephone: telephone,
         medicalCenterImage: imageUrl,
         medicalCenterDescription: description,
+        medicalCenterAddress: address,
       },
     });
   };
@@ -112,13 +114,19 @@ const MedicalCenterCard = ({
               </View>
 
               <View className="w-[1px] h-3 bg-gray-300 ml-2"></View>
-              <View className="w-full flex-row items-center justify-start ml-2">
+              <View className="w-28 flex-row items-center justify-start ml-1">
                 <FontAwesomeIcon
                   icon={icons.faLocationDot}
                   size={10}
                   style={{ color: "#ef4444" }}
                 />
-                <Text className="text-[10px] ml-[1px]">{distance}</Text>
+                <Text
+                  className="text-[10px] ml-[1px]"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {address}
+                </Text>
               </View>
             </View>
 

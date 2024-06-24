@@ -132,16 +132,25 @@ export const get_best_selling_products_by_shop_and_category = async (
   }
 };
 
-export const get_highest_rating_products = async (page_number, num_of_page) => {
+export const get_highest_rating_products = async (
+  page_number,
+  num_of_page,
+  target
+) => {
   if (page_number === undefined) {
     page_number = 1;
   }
   if (num_of_page === undefined) {
     num_of_page = 10;
   }
+  if (target === undefined) {
+    target = "";
+  } else {
+    target = `&target=${target}`;
+  }
   try {
     const response = await ApiManager.get(
-      `/customer/products/highest-rating?page_number=${page_number}&num_of_page=${num_of_page}`
+      `/customer/products/highest-rating?page_number=${page_number}&num_of_page=${num_of_page}${target}`
     );
     return response;
   } catch (error) {
@@ -277,28 +286,6 @@ export const get_best_selling_products_by_shop_and_category_type = async (
   try {
     const response = await ApiManager.get(
       `/customer/products/best-selling/shop/${shopId}/category-type?page_number=${page_number}&num_of_page=${num_of_page}&category_type=${categoryType}`
-    );
-    return response;
-  } catch (error) {
-    return error.response.data;
-  }
-};
-
-export const get_product_reviews = async (
-  productId,
-  page_number,
-  num_of_page
-) => {
-  if (page_number === undefined) {
-    page_number = 1;
-  }
-  if (num_of_page === undefined) {
-    num_of_page = 10;
-  }
-
-  try {
-    const response = await ApiManager.get(
-      `/customer/ratings/product/${productId}?page_number=${page_number}&num_of_page=${num_of_page}`
     );
     return response;
   } catch (error) {

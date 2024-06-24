@@ -4,18 +4,16 @@ import {
   TouchableOpacity,
   ImageBackground,
   RefreshControl,
+  FlatList,
+  Modal,
 } from "react-native";
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
 import { images } from "../../constants";
 import { router } from "expo-router";
-import { PetDummy } from "../../dummy/FakeData";
 import MyPetCard from "../../components/MyPetCard";
-import { ExperimentData } from "../../dummy/FakeData";
 import MyMinimalPost from "../../components/MyMinimalPost";
-import { FlashList } from "@shopify/flash-list";
 import { get_all_my_pets } from "../../api/PetApi";
 import {
   BottomSheetModal,
@@ -25,19 +23,76 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Image } from "expo-image";
 import { useGlobalContext } from "../../state/GlobalContextProvider";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import LottieView from "lottie-react-native";
+import * as ImagePicker from "expo-image-picker";
+import {
+  ref,
+  uploadBytesResumable,
+  listAll,
+  deleteObject,
+  getDownloadURL,
+} from "firebase/storage";
+import { FIREBASE_STORAGE } from "../../firebaseConfig";
+import { get_my_blogs, delete_blog } from "../../api/BlogApi";
+import { update_profile, get_my_profile } from "../../api/UserApi";
 
 const MyProfile = () => {
-  const [userAvatar, setUserAvatar] = useState(null);
+  const {
+    userAvatar,
+    setToast,
+    setUserAvatar,
+    userId,
+    userName,
+    userFullName,
+    userEmail,
+  } = useGlobalContext();
   const [refreshing, setRefreshing] = useState(false);
   const [activeCategory, setActiveCategory] = useState("posts");
-  const bottomSheetModalRef = useRef(null);
   const snapPoints = ["30%", "50%"];
-  const [focusedPost, setFocusedPost] = useState(null);
-  const { userName, userFullName, userEmail } = useGlobalContext();
   const [myPets, setMyPets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userData, setUserData] = useState({});
+  const [myBlogs, setMyBlogs] = useState([]);
+  const [page, setPage] = useState(1);
+  const [maxPage, setMaxPage] = useState(1);
+  const [currentImagesUrls, setCurrentImagesUrls] = useState([]);
+  const [currentTitle, setCurrentTitle] = useState("");
+  const [currentText, setCurrentText] = useState("");
+  const [currentBlogId, setCurrentBlogId] = useState(null);
+  const [currentFolderRef, setCurrentFolderRef] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [currentProccessText, setCurrentProccessText] = useState(". . .");
+  const [loadingText, setLoadingText] = useState("Deleting post");
+  const [flags, setFlags] = useState([]);
+  const bottomSheetModalRef = useRef(null);
+  const intervalRef = useRef(null);
+
+  const handleNavigateMyPets = () => {
+    router.push("../screens/MyPet");
+  };
+
+  const startAnimation = () => {
+    if (!intervalRef.current) {
+      intervalRef.current = setInterval(() => {
+        setCurrentProccessText((prevText) => {
+          if (prevText === ". . .") return ".";
+          return prevText + " .";
+        });
+      }, 200);
+    }
+  };
+
+  const stopAnimation = () => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
+  };
+
+  const handleLoadMore = () => {
+    if (page < maxPage) {
+      setPage(page + 1);
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -48,7 +103,7 @@ const MyProfile = () => {
     router.back();
   };
 
-  const toggleSheet = () => {
+  const openBottomSheet = () => {
     bottomSheetModalRef.current.present();
   };
 
@@ -56,26 +111,166 @@ const MyProfile = () => {
     bottomSheetModalRef.current.dismiss();
   };
 
-  const handleOpenPostSettings = (post) => {
-    setFocusedPost(post);
-    toggleSheet();
+  const uploadImage = (imageFile) => {
+    return new Promise((resolve, reject) => {
+      const storageRef = ref(FIREBASE_STORAGE, userAvatar);
+      deleteObject(storageRef).then(() => {
+        const newStorageRef = ref(
+          FIREBASE_STORAGE,
+          `/avatars/customer/${userId}`
+        );
+        const uploadTask = uploadBytesResumable(newStorageRef, imageFile);
+
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            console.log("Upload is " + progress + "% done");
+          },
+          (error) => {
+            // Handle unsuccessful uploads
+            console.error("Upload failed:", error);
+            reject(error);
+          },
+          () => {
+            getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+              setUserAvatar(url);
+              resolve(`${newStorageRef.toString()}`);
+            });
+          }
+        );
+      });
+    });
+  };
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: false,
+      aspect: [4, 3],
+      quality: 1,
+      allowsMultipleSelection: true,
+      selectionLimit: 1,
+    });
+
+    if (!result.cancelled) {
+      setLoadingText("Updating profile image");
+      setIsSending(true);
+      const imageUri = result.assets[0].uri;
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      uploadImage(blob).then((imageRef) => {
+        update_profile({
+          address: userData.address,
+          phone: userData.phone,
+          username: userName,
+          email: userEmail,
+          gender: userData.gender,
+          full_name: userFullName,
+          birthdate: userData.birthdate,
+          avatar: imageRef,
+        }).then((res) => {
+          if (res && res.status === 200) {
+            setLoadingText("Profile image updated successfully!");
+            setIsSending(false);
+            setToast({
+              type: "success",
+              text1: "Success",
+              text2: "Profile image updated successfully!",
+            });
+            setLoadingText("Deleting post");
+          }
+        });
+      });
+    }
   };
 
   const handleEditPost = () => {
     closeBottomSheet();
+    const encodedUrls = currentImagesUrls.map(encodeURIComponent);
     router.push({
       pathname: "../screens/EditPost",
       params: {
-        avatar: focusedPost.avatar,
-        username: focusedPost.username,
-        title: focusedPost.title,
-        description: focusedPost.description,
-        uploadedImage: focusedPost.uploadedImage,
-        likes: focusedPost.likes,
-        dislikes: focusedPost.dislikes,
-        comments: focusedPost.comments,
+        title: currentTitle,
+        text: currentText,
+        images: encodedUrls,
+        id: currentBlogId,
+        folderRef: encodeURIComponent(currentFolderRef),
       },
     });
+  };
+
+  const handleDelete = () => {
+    closeBottomSheet();
+    setShowModal(true);
+  };
+
+  const deleteFolder = async (folderPath) => {
+    const folderRef = ref(FIREBASE_STORAGE, folderPath);
+    try {
+      // List all files in the folder
+      const fileList = await listAll(folderRef);
+      fileList.items.forEach((fileRef) => {
+        deleteObject(fileRef)
+          .then(() => {
+            console.log(`${fileRef.name} deleted successfully`);
+          })
+          .catch((error) => {
+            console.error("Error deleting file:", error);
+          });
+      });
+    } catch (error) {
+      console.error("Error listing files:", error);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    const fetchBlogs = async () => {
+      const res = await get_my_blogs(page, 10);
+      if (res && res.status === 200) {
+        const newBlogs = [...myBlogs, ...res.data.data];
+        const uniqueBlogs = newBlogs.reduce((unique, blog) => {
+          if (!unique.find((item) => item.id === blog.id)) {
+            unique.push(blog);
+          }
+          return unique;
+        }, []);
+        setMyBlogs(uniqueBlogs);
+        setMaxPage(res.data.total_pages);
+      } else {
+        console.error("Failed to fetch blogs");
+        setMaxPage(1);
+      }
+    };
+    setShowModal(false);
+    try {
+      setIsSending(true);
+      startAnimation();
+      await deleteFolder(currentFolderRef);
+      delete_blog(currentBlogId).then((res) => {
+        if (res && res.status === 200) {
+          setMyBlogs(myBlogs.filter((blog) => blog.id !== currentBlogId));
+          stopAnimation();
+          setCurrentProccessText("");
+          setLoadingText("Post deleted successfully!");
+          setTimeout(() => {
+            setIsSending(false);
+            setToast({
+              type: "success",
+              text1: "Success",
+              text2: "Post deleted successfully!",
+            });
+            setLoadingText("Deleting post");
+            setCurrentProccessText(". . .");
+          }, 500);
+        } else {
+          console.log(res);
+        }
+      });
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleNavigateMyPet = () => {
@@ -87,11 +282,6 @@ const MyProfile = () => {
   };
 
   useEffect(() => {
-    const fetchUserAvatar = async () => {
-      const avatar = await AsyncStorage.getItem("userAvatar");
-      setUserAvatar(avatar);
-    };
-
     const fetchMyPets = async () => {
       try {
         get_all_my_pets(1, 10).then((res) => {
@@ -108,16 +298,65 @@ const MyProfile = () => {
               return unique;
             }, []);
             setMyPets(uniquePets);
-            setIsLoading(false);
+            setFlags((prev) => [...prev, true]);
+          } else {
+            console.error("Failed to fetch pets");
+            setFlags((prev) => [...prev, true]);
           }
         });
       } catch (error) {
         console.error("Error fetching pets:", error);
+        setFlags((prev) => [...prev, true]);
       }
     };
-    fetchUserAvatar();
+    const fetchProfile = async () => {
+      const res = await get_my_profile();
+      if (res && res.status === 200) {
+        setUserData({
+          address: res.data.data.address,
+          phone: res.data.data.phone,
+          gender: res.data.data.gender,
+          full_name: res.data.data.full_name,
+          birthdate: res.data.data.birthdate,
+        });
+        setFlags((prev) => [...prev, true]);
+      } else {
+        console.error("Failed to fetch profile");
+        setFlags((prev) => [...prev, true]);
+      }
+    };
     fetchMyPets();
+    fetchProfile();
   }, []);
+
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      const res = await get_my_blogs(page, 10);
+      if (res && res.status === 200) {
+        const newBlogs = [...myBlogs, ...res.data.data];
+        const uniqueBlogs = newBlogs.reduce((unique, blog) => {
+          if (!unique.find((item) => item.id === blog.id)) {
+            unique.push(blog);
+          }
+          return unique;
+        }, []);
+        setMyBlogs(uniqueBlogs);
+        setMaxPage(res.data.total_pages);
+        setFlags((prev) => [...prev, true]);
+      } else {
+        console.error("Failed to fetch blogs");
+        setMaxPage(1);
+        setFlags((prev) => [...prev, true]);
+      }
+    };
+    fetchBlogs();
+  }, [page]);
+
+  useEffect(() => {
+    if (flags.length === 3 && flags.every((flag) => flag === true)) {
+      setIsLoading(false);
+    }
+  }, [flags]);
 
   const renderBackdrop = useCallback(
     (props) => (
@@ -133,8 +372,34 @@ const MyProfile = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
-        <SafeAreaView className="h-full w-full">
-          <View className="w-full h-12 flex-row items-center justify-center">
+        <View className="h-full w-full pb-2">
+          {isSending && (
+            <View className="w-full h-full flex-row items-start justify-center absolute top-0 bottom-0 z-[12]">
+              <View className="w-full h-full bg-zinc-900/40 opacity-100 absolute top-0 bottom-0"></View>
+              <LottieView
+                style={{ width: 240, height: 240, marginTop: 250 }}
+                source={require("../../assets/lottie/sendingData.json")}
+                autoPlay
+                loop
+                speed={1.5}
+              />
+              <View className="w-full h-fit absolute top-[440px] flex-row items-center justify-center">
+                <View className="w-fit h-fit flex-row items-center justify-end">
+                  <Text className="text-white text-[14px] font-semibold">
+                    {loadingText}
+                  </Text>
+                </View>
+                {currentProccessText !== "" && (
+                  <View className="w-7 h-fit flex-row items-center justify-start ml-1">
+                    <Text className="text-white text-[14px] font-semibold ">
+                      {currentProccessText}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+          <View className="w-full h-12 flex-row items-center justify-center mt-[50px]">
             <TouchableOpacity
               className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
               onPress={handleBack}
@@ -154,31 +419,42 @@ const MyProfile = () => {
                 source={require("../../assets/lottie/loading.json")}
                 autoPlay
                 loop
-                speed={1.5}
+                speed={2}
               />
             </View>
           ) : (
-            <FlashList
-              data={ExperimentData}
+            <FlatList
+              scrollEventThrottle={16}
+              data={myBlogs}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
                 <MyMinimalPost
+                  id={item.id}
                   username={item.username}
                   title={item.title}
-                  description={item.description}
+                  description={item.text}
                   avatar={item.avatar}
-                  uploadedImage={item.uploadedImage}
-                  likes={item.likes}
-                  dislikes={item.dislikes}
-                  comments={item.comments}
-                  handleOpenPostSettings={() => handleOpenPostSettings(item)}
+                  uploadedImage={item.image}
+                  likes={item.likes_count}
+                  dislikes={item.dislikes_count}
+                  comments={item.comments_count}
+                  interaction={item.interaction_type}
+                  createdAt={item.created_at}
+                  setIsBottomSheetVisible={openBottomSheet}
+                  setCurrentImageUrls={setCurrentImagesUrls}
+                  setCurrentTitle={setCurrentTitle}
+                  setCurrentText={setCurrentText}
+                  setCurrentBlogId={setCurrentBlogId}
+                  setCurrentFolderRef={setCurrentFolderRef}
                 />
               )}
-              estimatedItemSize={20}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
               }
               showsVerticalScrollIndicator={false}
+              initialNumToRender={10}
+              onEndReached={handleLoadMore}
+              onEndReachedThreshold={0.5}
               ListHeaderComponent={() => (
                 <View className="w-full h-fit">
                   <View className="w-full h-[1px] bg-gray-200"></View>
@@ -194,7 +470,10 @@ const MyProfile = () => {
                         className="w-full h-full rounded-full"
                       />
                     </View>
-                    <TouchableOpacity className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 left-0 ml-32 -mb-9 border-[1px] border-solid border-[#F2F2F2]">
+                    <TouchableOpacity
+                      className="w-8 h-8 rounded-full flex-1 items-center justify-center bg-gray-300 absolute bottom-0 left-0 ml-32 -mb-9 border-[1px] border-solid border-[#F2F2F2]"
+                      onPress={pickImage}
+                    >
                       <FontAwesomeIcon
                         icon={icons.faCamera}
                         size={16}
@@ -242,6 +521,7 @@ const MyProfile = () => {
                         className={`w-16 h-8 rounded-full flex-row items-center justify-center ${
                           activeCategory === "photos" ? "bg-[#fed7aa]" : ""
                         }`}
+                        onPress={handleNavigateMyPets}
                       >
                         <Text
                           className={`text-[12px] font-semibold ${
@@ -250,7 +530,7 @@ const MyProfile = () => {
                               : "text-black"
                           }`}
                         >
-                          Photos
+                          Pets
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -358,7 +638,10 @@ const MyProfile = () => {
                     Edit Post
                   </Text>
                 </TouchableOpacity>
-                <TouchableOpacity className="w-full h-12 flex-row items-center justify-start mt-2">
+                <TouchableOpacity
+                  className="w-full h-12 flex-row items-center justify-start mt-2"
+                  onPress={handleDelete}
+                >
                   <FontAwesomeIcon
                     icon={icons.faTrashCan}
                     size={18}
@@ -371,7 +654,36 @@ const MyProfile = () => {
               </View>
             </View>
           </BottomSheetModal>
-        </SafeAreaView>
+          <Modal visible={showModal} animationType="fade" transparent={true}>
+            <View className="flex-1 bg-zinc-900/40 opacity-[50] h-full w-full flex-row items-center justify-center">
+              <View className="w-56 flex-col h-24 items-center justify-center bg-white rounded-md">
+                <View className="w-full h-[45%] flex-row items-center justify-center px-2">
+                  <Text className="text-[13px] text-gray-600 font-medium">
+                    Are you sure you want to delete this post?
+                  </Text>
+                </View>
+                <View className="w-full h-[45%] flex-row items-center justify-center mt-2 border-t-[1px] border-solid border-gray-300">
+                  <TouchableOpacity
+                    className="w-[50%] h-full bg-white flex-row items-center justify-center border-r-[1px] border-solid border-gray-300 rounded-bl-md"
+                    onPress={() => setShowModal(false)}
+                  >
+                    <Text className="text-black text-[13px] font-medium">
+                      No
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    className="w-[50%] h-full bg-white flex-row items-center justify-center rounded-br-md"
+                    onPress={handleDeletePost}
+                  >
+                    <Text className="text-[#f59e0b] text-[13px] font-medium">
+                      Delete
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        </View>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );

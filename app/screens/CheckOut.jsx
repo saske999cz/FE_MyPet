@@ -22,6 +22,8 @@ import { useGlobalContext } from "../../state/GlobalContextProvider";
 import { useLocalSearchParams } from "expo-router";
 import { formatVND } from "../../utils/currencyFormater";
 import LottieView from "lottie-react-native";
+import { create_cart } from "../../api/CartApi";
+import GooglePlacesInput from "../../components/GooglePlacesInput";
 
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
@@ -80,15 +82,22 @@ const ShippingInfoScreen = ({
   return (
     <View
       className={`h-fit w-[${formWidth}] flex-col items-center justify-start px-4 mt-4`}
+      style={{ zIndex: 0 }}
     >
       <Text className="text-[17px] font-semibold mb-4">
         Shipping Information
       </Text>
+      {/* <View
+        className="w-full h-48 flex-row items-start justify-start"
+        style={{ zIndex: 1 }}
+      >
+        <GooglePlacesInput />
+      </View> */}
       <FormField
         title="Shipping Address"
         placeholder="Enter address"
         titleStyles="text-black font-[13px]"
-        otherStyles="mt-5"
+        otherStyles="mt-5 mb-4"
         error={error.address}
         handleChangeText={(e) => {
           setShippingData({ ...shippingData, address: e });
@@ -106,9 +115,9 @@ const PaymentScreen = ({
   totalAmount,
   setShippingData,
   shippingData,
+  numberOfSubOrders,
 }) => {
   const [transactionFee, setTransactionFee] = useState(0);
-  useEffect(() => {}, [paymentMethod]);
 
   return (
     <View
@@ -120,13 +129,21 @@ const PaymentScreen = ({
         <Text className="text-[14px]">{formatVND(totalAmount)}</Text>
       </View>
       <View className="w-full h-7 flex-row items-center justify-between px-2">
+        <Text className="text-[14px]">Shipping fee:</Text>
+        <Text className="text-[14px]">
+          {formatVND(30000 * numberOfSubOrders)}
+        </Text>
+      </View>
+      <View className="w-full h-7 flex-row items-center justify-between px-2">
         <Text className="text-[14px]">Transaction fee:</Text>
         <Text className="text-[14px]">{formatVND(transactionFee)}</Text>
       </View>
       <View className="w-full h-fit flex-row items-center justify-between px-2 border-b-[1px] border-solid border-gray-300 pb-4 pt-2">
         <Text className="text-[14px] font-semibold">Total amount:</Text>
         <Text className="text-[14px] font-semibold">
-          {formatVND(parseFloat(totalAmount) + transactionFee)}
+          {formatVND(
+            parseFloat(totalAmount) + transactionFee + 30000 * numberOfSubOrders
+          )}
         </Text>
       </View>
       <View className="w-full h-fit flex-col items-center justify-start mt-2">
@@ -203,6 +220,7 @@ const ScreenControler = ({
   totalAmount,
   setError,
   userFullName,
+  numberOfSubOrders,
 }) => {
   switch (currentStep) {
     case 1:
@@ -222,6 +240,7 @@ const ScreenControler = ({
           totalAmount={totalAmount}
           setShippingData={setShippingData}
           shippingData={shippingData}
+          numberOfSubOrders={numberOfSubOrders}
         />
       );
     case 3:
@@ -232,7 +251,15 @@ const ScreenControler = ({
 };
 
 const CheckOut = () => {
-  const { cartId, checkOutItems, userFullName } = useGlobalContext();
+  const {
+    cartId,
+    checkOutItems,
+    userFullName,
+    setCartId,
+    setCartLength,
+    setCurrentCartItems,
+    numberOfSubOrders,
+  } = useGlobalContext();
   const { totalAmount } = useLocalSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState(null);
@@ -240,13 +267,14 @@ const CheckOut = () => {
     address: "",
     payment_method: "",
     cart_id: cartId,
-    transaction_id: "",
+    transaction_order_id: "",
   });
   const [isLoading, setLoading] = useState(false);
   const [paypalUrl, setPaypalUrl] = useState(null);
   const [paypalAccessToken, setPaypalAccessToken] = useState(null);
   const [error, setError] = useState({});
   const [isFinished, setFinished] = useState(false);
+  const [paymentCaptured, setPaymentCaptured] = useState(false);
 
   const activePaymentMethod = (method) => {
     setPaymentMethod(method);
@@ -285,12 +313,15 @@ const CheckOut = () => {
     setLoading(true);
     try {
       const token = await PaypalApi.generateToken();
-      const orderDetail = PaypalApi.createOrderDetail(checkOutItems);
+      const orderDetail = PaypalApi.createOrderDetail(
+        checkOutItems,
+        numberOfSubOrders
+      );
       const res = await PaypalApi.createOrder(token, orderDetail);
       setPaypalAccessToken(token);
       setLoading(false);
       if (!!res?.links) {
-        const findUrl = res.links.find((data) => data?.rel == "approve");
+        const findUrl = res.links.find((data) => data?.rel === "approve");
         setPaypalUrl(findUrl.href);
       }
     } catch (error) {
@@ -299,38 +330,70 @@ const CheckOut = () => {
     }
   };
 
-  const onUrlChange = (webviewState) => {
+  const onUrlChange = async (webviewState) => {
     if (webviewState.url.includes("https://example.com/cancel")) {
       clearPaypalState();
       return;
     }
     if (webviewState.url.includes("https://example.com/return")) {
+      if (paymentCaptured) {
+        return;
+      }
+      setPaymentCaptured(true);
       const urlValues = queryString.parseUrl(webviewState.url);
       const { token } = urlValues.query;
       if (!!token) {
-        paymentSucess(token);
+        await paymentSucess(token).then((res) => {
+          if (res) {
+            setFinished(true);
+            setCurrentStep(3);
+            setTimeout(() => {
+              setFinished(false);
+            }, 2000);
+          }
+        });
+        return;
       }
     }
   };
 
   const paymentSucess = async (id) => {
-    setLoading(true);
     try {
-      const res = PaypalApi.capturePayment(id, paypalAccessToken);
-      await create_order({
-        ...shippingData,
-        transaction_id: res.purchased_units[0].payments.captures[0].id,
+      await PaypalApi.capturePayment(id, paypalAccessToken).then((res) => {
+        clearPaypalState();
+        create_order({
+          ...shippingData,
+          transaction_order_id: res.purchase_units[0].payments.captures[0].id,
+        }).then((res) => {
+          if (res.status === 201)
+            create_cart().then((res) => {
+              if (res && res.status === 200) {
+                setCartLength(
+                  res.data.shops.reduce(
+                    (total, shop) => total + shop.cart_items.length,
+                    0
+                  )
+                );
+                setCartId(res.data.cart.id);
+                const combinedItemIds = res.data.shops.reduce((ids, shop) => {
+                  const shopItemIds = shop.cart_items.map(
+                    (item) => item.product_id
+                  );
+                  return ids.concat(shopItemIds);
+                }, []);
+                setCurrentCartItems(combinedItemIds);
+              } else {
+                setCartLength(0);
+                setCartId(res.data.cart.id);
+                setCurrentCartItems([]);
+              }
+            });
+        });
       });
-      clearPaypalState();
-      setLoading(false);
-      setCurrentStep(3);
-      setFinished(true);
-      setTimeout(() => {
-        setFinished(false);
-      }, 2000);
+      return true;
     } catch (error) {
       console.log("error raised in payment capture", error);
-      setLoading(false);
+      return false;
     }
   };
 
@@ -345,8 +408,8 @@ const CheckOut = () => {
 
   return (
     <View className="w-full h-full">
-      <SafeAreaView className="flex-1 items-center">
-        <View className="w-full h-12 flex-row items-center justify-center">
+      <View className="w-full h-full">
+        <View className="w-full h-12 flex-row items-center justify-center mt-[55px]">
           <TouchableOpacity
             className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
             onPress={handleBack}
@@ -359,9 +422,9 @@ const CheckOut = () => {
           </TouchableOpacity>
           <Text className="text-[16px] font-semibold">Check Out</Text>
         </View>
-        <ScrollView className={`flex-1 w-full`}>
+        <View className={`w-full h-full`}>
           <View
-            className={`w-[${formWidth}] h-full items-center justify-center mb-8`}
+            className={`w-[${formWidth}] h-full items-center justify-start mb-8`}
           >
             <View className="w-[95%] h-fit bg-white rounded-lg mt-2 flex-col items-center justify-start">
               <StepperBar steps={[1, 2, 3]} currentStep={currentStep} />
@@ -375,6 +438,7 @@ const CheckOut = () => {
                 totalAmount={totalAmount}
                 setError={setError}
                 userFullName={userFullName}
+                numberOfSubOrders={numberOfSubOrders}
               />
               <View
                 className={`w-full h-16 flex-row items-center justify-center px-4 mb-2 ${
@@ -427,7 +491,7 @@ const CheckOut = () => {
               </View>
             </View>
           </View>
-        </ScrollView>
+        </View>
         <Modal visible={!!paypalUrl}>
           <TouchableOpacity
             onPress={clearPaypalState}
@@ -447,7 +511,7 @@ const CheckOut = () => {
             />
           </View>
         </Modal>
-      </SafeAreaView>
+      </View>
       {isLoading && (
         <View className="absolute w-full h-full top-0 right-0 left-0 bottom-0 flex-row items-start justify-center">
           <View className="w-full h-full bg-black opacity-80 absolute top-0"></View>

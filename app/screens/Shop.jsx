@@ -4,6 +4,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   FlatList,
+  ScrollView,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
@@ -19,6 +20,8 @@ import { Image } from "expo-image";
 import LottieView from "lottie-react-native";
 import { FIREBASE_STORAGE } from "../../firebaseConfig";
 import { getDownloadURL, ref } from "firebase/storage";
+import Review from "../../components/Review";
+import { get_shop_reviews } from "../../api/RatingApi";
 
 const Shop = () => {
   const {
@@ -40,7 +43,10 @@ const Shop = () => {
   const [categories, setCategories] = useState(null);
   const [shopImage, setShopImage] = useState(null);
   const [page, setPage] = useState(1);
+  const [maxPage, setMaxPage] = useState(1);
   const [flags, setFlags] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -50,7 +56,18 @@ const Shop = () => {
     router.back();
   };
 
+  const handleReviewPress = () => {
+    router.push({
+      pathname: "../screens/AllShopReviews",
+      params: {
+        shopId: shopId,
+        totalReviews: totalReviews,
+      },
+    });
+  };
+
   const handleLoadMore = () => {
+    if (page >= maxPage) return;
     setPage((prevPage) => prevPage + 1);
   };
 
@@ -82,6 +99,7 @@ const Shop = () => {
                 return unique;
               }, []);
               setProducts(uniqueProducts);
+              setMaxPage(res.data.total_pages);
               setFlags((prev) => [...prev, true]);
             }
           })
@@ -122,7 +140,26 @@ const Shop = () => {
   }, []);
 
   useEffect(() => {
-    if (flags.length === 3 && flags.every((flag) => flag === true)) {
+    const fetchReviews = async () => {
+      try {
+        get_shop_reviews(shopId)
+          .then((res) => {
+            if (res && res.status === 200) {
+              setReviews(res.data.data);
+              setTotalReviews(res.data.total_ratings);
+              setFlags((prev) => [...prev, true]);
+            }
+          })
+          .catch((error) => console.error("Error fetching reviews:", error));
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+    };
+    fetchReviews();
+  }, []);
+
+  useEffect(() => {
+    if (flags.length === 4 && flags.every((flag) => flag === true)) {
       setIsLoading(false);
     }
   }, [flags]);
@@ -134,6 +171,7 @@ const Shop = () => {
         autoPlay
         loop
         style={{ width: 130, height: 130, marginTop: 300 }}
+        speed={2}
       />
     </View>
   ) : (
@@ -302,7 +340,7 @@ const Shop = () => {
               ))}
             </View>
           ) : activeTab === "shop" ? (
-            <View className="w-full h-fit px-4">
+            <ScrollView className="w-full h-fit px-4">
               <View className="w-full h-28 mt-4">
                 <View className="w-full h-6 flex-row items-center justify-start">
                   <FontAwesomeIcon
@@ -324,26 +362,84 @@ const Shop = () => {
                     {shopPhone}
                   </Text>
                 </View>
-                <View className="w-full h-fit flex-row items-center justify-start mt-2">
-                  <FontAwesomeIcon
-                    icon={icons.faGlobe}
-                    size={13}
-                    style={{ color: "#06b6d4" }}
-                  />
-                  <Text className="text-[13px] font-semibold ml-3">
-                    {shopWebsite}
-                  </Text>
-                </View>
+                {shopWebsite && (
+                  <View className="w-full h-fit flex-row items-center justify-start mt-2">
+                    <FontAwesomeIcon
+                      icon={icons.faGlobe}
+                      size={13}
+                      style={{ color: "#06b6d4" }}
+                    />
+                    <Text className="text-[13px] font-semibold ml-3">
+                      {shopWebsite}
+                    </Text>
+                  </View>
+                )}
               </View>
               <View className="w-full h-fit">
                 <View className="w-full h-8 mt-4">
-                  <Text className="text-[13px] font-semibold">Description</Text>
+                  <Text className="text-[14px] font-semibold">Description</Text>
                 </View>
                 <View className="w-full h-fit">
                   <Text className="text-[13px]">{shopDescription}</Text>
                 </View>
+                <View className="w-full h-[4px] bg-gray-300 mt-5"></View>
+                {reviews && (
+                  <View className="w-full h-fit">
+                    <View className="w-full h-12 mt-2 flex-row items-center justify-between">
+                      <Text className="font-semibold text-[14px]">{`Reviews (${totalReviews})`}</Text>
+                      {reviews.length >= 3 && (
+                        <TouchableOpacity
+                          className="w-16 h-10 flex-row items-center justify-center"
+                          onPress={handleReviewPress}
+                        >
+                          <Text className="text-[14px] text-[#f59e0b] mr-1">
+                            See all
+                          </Text>
+                          <FontAwesomeIcon
+                            icon={icons.faChevronRight}
+                            size={12}
+                            style={{ color: "#f59e0b" }}
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <View className="w-full h-fit">
+                      {reviews.slice(0, 2).map((review) => (
+                        <Review
+                          key={review.rating_id}
+                          avatar={review.customer_avatar}
+                          username={review.customer_username}
+                          rating={review.rating_score}
+                          review={review.description}
+                          type="shop"
+                        />
+                      ))}
+                    </View>
+                    {reviews.length >= 3 ? (
+                      <TouchableOpacity
+                        className="w-full h-10 flex-row items-center justify-center mt-1"
+                        onPress={handleReviewPress}
+                      >
+                        <Text className="text-[14px] text-[#f59e0b] mr-1">
+                          See all
+                        </Text>
+                        <FontAwesomeIcon
+                          icon={icons.faChevronRight}
+                          size={12}
+                          style={{ color: "#f59e0b" }}
+                        />
+                      </TouchableOpacity>
+                    ) : (
+                      <View className="w-full h-6 flex-row items-center justify-center mt-4">
+                        <Text className="text-[13px]">
+                          No more reviews to show
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
               </View>
-            </View>
+            </ScrollView>
           ) : null}
         </View>
       </View>

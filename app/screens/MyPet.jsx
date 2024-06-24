@@ -41,6 +41,7 @@ const MyPet = () => {
   const [pets, setPets] = useState([]);
   const [breeds, setBreeds] = useState([]);
   const [page, setPage] = useState(1);
+  const [maxPage, setMaxPage] = useState(1);
   const [newPet, setNewPet] = useState({
     name: "",
     type: "",
@@ -75,6 +76,7 @@ const MyPet = () => {
   };
 
   const handleLoadMore = () => {
+    if (page >= maxPage) return;
     setPage((prev) => prev + 1);
   };
 
@@ -238,6 +240,7 @@ const MyPet = () => {
               return unique;
             }, []);
             setPets(uniquePets);
+            setMaxPage(res.data.total_pages);
             setIsLoading(false);
           }
         });
@@ -328,7 +331,7 @@ const MyPet = () => {
                   source={require("../../assets/lottie/loading.json")}
                   autoPlay
                   loop
-                  speed={1.5}
+                  speed={2}
                 />
               </View>
             ) : (

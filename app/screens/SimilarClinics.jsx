@@ -13,12 +13,15 @@ import { icons } from "../../constants";
 import { useLocalSearchParams } from "expo-router";
 import MedicalCenterCard from "../../components/MedicalCenterCard";
 import { get_highest_rating_medical_centers } from "../../api/MedicalCenterApi";
+import LottieView from "lottie-react-native";
 
 const SimilarClinics = () => {
   const { medicalCenterId } = useLocalSearchParams();
   const [refreshing, setRefreshing] = useState(false);
   const [similarClinics, setSimilarClinics] = useState([]);
   const [page, setPage] = useState(1);
+  const [maxPage, setMaxPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -30,6 +33,7 @@ const SimilarClinics = () => {
   };
 
   const handleLoadMore = () => {
+    if (page >= maxPage) return;
     setPage((prevPage) => prevPage + 1);
   };
 
@@ -54,10 +58,13 @@ const SimilarClinics = () => {
               return unique;
             }, []);
             setSimilarClinics(uniqueClinics);
+            setMaxPage(res.data.total_pages);
+            setIsLoading(false);
           }
         });
       } catch (error) {
         console.error("Error fetching similar clinics:", error);
+        setIsLoading(false);
       }
     };
 
@@ -79,38 +86,50 @@ const SimilarClinics = () => {
         </TouchableOpacity>
         <Text className="font-bold text-[16px]">Other Medical Centers</Text>
       </View>
-      <FlatList
-        data={similarClinics}
-        keyExtractor={(item) => item.medical_center_id}
-        renderItem={({ item }) => (
-          <MedicalCenterCard
-            id={item.medical_center_id}
-            image={item.avatar}
-            name={item.name}
-            rating={item.rating}
-            distance={5}
-            workingHours={item.work_time}
-            telephone={item.phone}
-            description={item.description}
-            isHorizontal={false}
+      {isLoading ? (
+        <View className="w-full h-full flex-row items-start justify-center">
+          <LottieView
+            style={{ width: 130, height: 130, marginTop: 150 }}
+            source={require("../../assets/lottie/loading.json")}
+            autoPlay
+            loop
+            speed={2}
           />
-        )}
-        numColumns={2}
-        columnWrapperStyle={{
-          justifyContent: "space-around",
-        }}
-        estimatedItemSize={20}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        showsVerticalScrollIndicator={false}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.5}
-        viewabilityConfig={{
-          itemVisiblePercentThreshold: 80,
-          minimumViewTime: 300,
-        }}
-      />
+        </View>
+      ) : (
+        <FlatList
+          data={similarClinics}
+          keyExtractor={(item) => item.medical_center_id}
+          renderItem={({ item }) => (
+            <MedicalCenterCard
+              id={item.medical_center_id}
+              image={item.avatar}
+              name={item.name}
+              rating={item.rating}
+              distance={5}
+              workingHours={item.work_time}
+              telephone={item.phone}
+              description={item.description}
+              isHorizontal={false}
+            />
+          )}
+          numColumns={2}
+          columnWrapperStyle={{
+            justifyContent: "space-around",
+          }}
+          estimatedItemSize={20}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          viewabilityConfig={{
+            itemVisiblePercentThreshold: 80,
+            minimumViewTime: 300,
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 };

@@ -25,6 +25,9 @@ const GlobalContextProvider = ({ children }) => {
   const [quantityChanged, setQuantityChanged] = useState(false);
   const [currentCartItems, setCurrentCartItems] = useState([]);
   const [checkOutItems, setCheckOutItems] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [blogChanged, setBlogChanged] = useState(false);
+  const [numberOfSubOrders, setNumberOfSubOrders] = useState(0);
 
   const refreshAccessToken = async () => {
     try {
@@ -185,6 +188,12 @@ const GlobalContextProvider = ({ children }) => {
         setCurrentCartItems,
         checkOutItems,
         setCheckOutItems,
+        notifications,
+        setNotifications,
+        blogChanged,
+        setBlogChanged,
+        numberOfSubOrders,
+        setNumberOfSubOrders,
       }}
     >
       {children}

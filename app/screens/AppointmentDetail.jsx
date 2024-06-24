@@ -15,6 +15,7 @@ const AppointmentDetail = () => {
   const handleBack = () => {
     router.back();
   };
+
   useEffect(() => {
     const fetchAppointment = async () => {
       try {
@@ -53,7 +54,7 @@ const AppointmentDetail = () => {
             source={require("../../assets/lottie/loading.json")}
             autoPlay
             loop
-            speed={1.5}
+            speed={2}
           />
         </View>
       ) : (

@@ -1,37 +1,67 @@
-import { View, Text, TouchableOpacity, Image } from "react-native";
-import React, { useState } from "react";
+import { View, Text, TouchableOpacity, FlatList } from "react-native";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { icons } from "../../constants";
-import { images } from "../../constants";
+import { icons, images, blurhash } from "../../constants";
 import SearchInput from "../../components/SearchInput";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { router } from "expo-router";
-import { FlashList } from "@shopify/flash-list";
-import { ExperimentData, UserDummy } from "../../dummy/FakeData";
 import UserSearchCard from "../../components/UserSearchCard";
 import MinimalPost from "../../components/MinimalPost";
+import {
+  search_blog_by_title,
+  search_profile_by_username,
+} from "../../api/BlogApi";
+import { Image } from "expo-image";
+import LottieView from "lottie-react-native";
+
 const Search = () => {
   const [query, setQuery] = useState("");
-  const [postSearchResults, setPostSearchResults] = useState(null);
-  const [userSearchResults, setUserSearchResults] = useState(null);
+  const [postSearchResults, setPostSearchResults] = useState([]);
+  const [userSearchResults, setUserSearchResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [flags, setFlags] = useState([]);
+  const [page, setPage] = useState(2);
+  const [maxPage, setMaxPage] = useState(1);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+
   const handleBack = () => {
     router.back();
   };
+
+  const handleLoarMore = () => {
+    if (page < maxPage) {
+      search_blog_by_title(query, page, 10).then((res) => {
+        if (res && res.status === 200) {
+          const fetchedPosts = res.data.data;
+          const newPosts = [...postSearchResults, ...fetchedPosts];
+          const uniquePosts = newPosts.reduce((unique, post) => {
+            if (!unique.find((item) => item.id === post.id)) {
+              unique.push(post);
+            }
+            return unique;
+          }, []);
+          setPostSearchResults(uniquePosts);
+          setPage((prevPage) => prevPage + 1);
+        }
+      });
+    }
+  };
+
   const handleSearch = () => {
-    setIsFirstLoad(false);
-    const postResults = ExperimentData.filter((post) => {
-      return (
-        post.title.toLowerCase().includes(query.toLowerCase()) ||
-        post.description.toLowerCase().includes(query.toLowerCase()) ||
-        post.username.toLowerCase().includes(query.toLowerCase())
-      );
+    setIsLoading(true);
+    search_blog_by_title(query, 1, 10).then((res) => {
+      if (res && res.status === 200) {
+        setPostSearchResults(res.data.data);
+        setFlags((prev) => [...prev, true]);
+        setMaxPage(res.data.total_pages);
+      }
     });
-    const userResults = UserDummy.filter((user) =>
-      user.username.toLowerCase().includes(query.toLowerCase())
-    );
-    setPostSearchResults(postResults);
-    setUserSearchResults(userResults);
+    search_profile_by_username(query, 1, 10).then((res) => {
+      if (res && res.status === 200) {
+        setUserSearchResults(res.data.data);
+        setFlags((prev) => [...prev, true]);
+      }
+    });
   };
 
   const handleNavigateUserSearchResutls = () => {
@@ -42,6 +72,13 @@ const Search = () => {
       },
     });
   };
+
+  useEffect(() => {
+    if (flags.length === 2 && flags.every((flag) => flag === true)) {
+      setIsLoading(false);
+      setIsFirstLoad(false);
+    }
+  }, [flags]);
 
   return (
     <SafeAreaView className="w-full h-full">
@@ -64,64 +101,96 @@ const Search = () => {
           handleSearch={handleSearch}
         />
       </View>
-      <View className="w-full h-full pb-4 pt-4">
-        {(postSearchResults || userSearchResults) &&
-        (postSearchResults.length > 0 || userSearchResults.length > 0) ? (
-          <FlashList
-            data={postSearchResults}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <MinimalPost
-                username={item.username}
-                title={item.title}
-                description={item.description}
-                avatar={item.avatar}
-                uploadedImage={item.uploadedImage}
-                likes={item.likes}
-                dislikes={item.dislikes}
-                comments={item.comments}
-              />
-            )}
-            ListHeaderComponent={() => (
-              <View className="w-full flex-col items-start justify-start mt-2 px-4">
-                <Text className="font-semibold text-[16px]">Users</Text>
-                <View className="w-full h-fit mt-3 flex-col items-center justify-start">
-                  <View className="w-full flex-col items-center justify-start">
-                    {userSearchResults.slice(0, 3).map((user, index) => (
-                      <UserSearchCard
-                        key={index}
-                        name={user.name}
-                        avatar={user.avatar}
-                        age={user.age}
-                        gender={user.gender}
-                        username={user.username}
-                        email={user.email}
-                      />
-                    ))}
+      {isLoading ? (
+        <View className="w-full h-full flex-row items-start justify-center">
+          <LottieView
+            style={{ width: 120, height: 120, marginTop: 150 }}
+            source={require("../../assets/lottie/loading.json")}
+            autoPlay
+            loop
+            speed={2}
+          />
+        </View>
+      ) : (
+        <View className="w-full h-full pb-4 pt-4">
+          {(postSearchResults || userSearchResults) &&
+          (postSearchResults.length > 0 || userSearchResults.length > 0) ? (
+            <FlatList
+              data={postSearchResults}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <MinimalPost
+                  id={item.id}
+                  username={item.username}
+                  title={item.title}
+                  description={item.text}
+                  avatar={item.avatar}
+                  uploadedImage={item.image}
+                  likes={item.likes_count}
+                  dislikes={item.dislikes_count}
+                  comments={item.comments_count}
+                  interaction={item.interaction_type}
+                  createdAt={item.created_at}
+                />
+              )}
+              ListHeaderComponent={() => (
+                <View className="w-full flex-col items-start justify-start mt-2 px-4">
+                  <Text className="font-semibold text-[16px]">Users</Text>
+                  <View className="w-full h-fit mt-3 flex-col items-center justify-start">
+                    {userSearchResults.length > 0 ? (
+                      <View className="w-full flex-col items-center justify-start">
+                        {userSearchResults.slice(0, 3).map((user, index) => (
+                          <UserSearchCard
+                            key={index}
+                            id={user.account_id}
+                            username={user.username}
+                            avatar={user.avatar}
+                            email={user.email}
+                          />
+                        ))}
+                      </View>
+                    ) : (
+                      <Text className="text-[14px]">No users found</Text>
+                    )}
+                    {userSearchResults.length > 3 && (
+                      <TouchableOpacity
+                        className="w-full h-9 flex-row items-center justify-center bg-gray-200 rounded-md mt-4"
+                        onPress={handleNavigateUserSearchResutls}
+                      >
+                        <Text className="font-semibold text-[14px]">
+                          See more
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
-                  <TouchableOpacity
-                    className="w-full h-9 flex-row items-center justify-center bg-gray-200 rounded-md mt-4"
-                    onPress={handleNavigateUserSearchResutls}
-                  >
-                    <Text className="font-semibold text-[14px]">See more</Text>
-                  </TouchableOpacity>
+                  <View className="w-full h-[1px] bg-gray-300 mt-4 px-4"></View>
+                  <View className="w-full h-16 flex-row items-center justify-start">
+                    <Text className="font-semibold text-[16px]">Posts</Text>
+                  </View>
                 </View>
-                <View className="w-full h-[1px] bg-gray-300 mt-4 px-4"></View>
-                <View className="w-full h-16 flex-row items-center justify-start">
-                  <Text className="font-semibold text-[16px]">Posts</Text>
+              )}
+              initialNumToRender={10}
+              onEndReached={handleLoarMore}
+              onEndReachedThreshold={0.5}
+              ListEmptyComponent={() => (
+                <View className="w-full h-fit">
+                  <Text className="text-[13px]">No posts found</Text>
                 </View>
-              </View>
-            )}
-            estimatedItemSize={20}
-          />
-        ) : isFirstLoad ? null : (
-          <Image
-            source={images.nodata}
-            className="w-full h-full"
-            resizeMode="contain"
-          />
-        )}
-      </View>
+              )}
+            />
+          ) : isFirstLoad === false ? (
+            <View className="w-full h-full felx-row items-center justify-center">
+              <Image
+                source={images.nodata}
+                className="w-full h-52"
+                contentFit="contain"
+                transition={0}
+                placeholder={{ blurhash }}
+              />
+            </View>
+          ) : null}
+        </View>
+      )}
     </SafeAreaView>
   );
 };

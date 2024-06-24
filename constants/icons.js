@@ -65,6 +65,19 @@ import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { faCakeCandles } from "@fortawesome/free-solid-svg-icons";
 import { faClipboard } from "@fortawesome/free-solid-svg-icons";
 import { faIdCard } from "@fortawesome/free-solid-svg-icons";
+import { faBell } from "@fortawesome/free-solid-svg-icons";
+import { faHammer } from "@fortawesome/free-solid-svg-icons";
+import { faMoneyCheckDollar } from "@fortawesome/free-solid-svg-icons";
+import { faReceipt } from "@fortawesome/free-solid-svg-icons";
+import { faScrewdriverWrench } from "@fortawesome/free-solid-svg-icons";
+import { faBoxesStacked } from "@fortawesome/free-solid-svg-icons";
+import { faClockRotateLeft } from "@fortawesome/free-solid-svg-icons";
+import { faShare } from "@fortawesome/free-solid-svg-icons";
+import { faEarthAmericas } from "@fortawesome/free-solid-svg-icons";
+import { faPersonRunning } from "@fortawesome/free-solid-svg-icons";
+import { faCarSide } from "@fortawesome/free-solid-svg-icons";
+import { faGear } from "@fortawesome/free-solid-svg-icons";
+import { faFlag } from "@fortawesome/free-solid-svg-icons";
 
 export default {
   play,
@@ -134,4 +147,17 @@ export default {
   faCakeCandles,
   faClipboard,
   faIdCard,
+  faBell,
+  faHammer,
+  faMoneyCheckDollar,
+  faReceipt,
+  faScrewdriverWrench,
+  faBoxesStacked,
+  faClockRotateLeft,
+  faShare,
+  faEarthAmericas,
+  faPersonRunning,
+  faCarSide,
+  faGear,
+  faFlag,
 };

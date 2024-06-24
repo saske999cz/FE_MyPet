@@ -1,5 +1,5 @@
 import { View, Text, TextInput, TouchableOpacity, Image } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { icons } from "../constants";
 
 const FormField = ({
@@ -46,15 +46,15 @@ const FormField = ({
         } rounded-md focus:border-[#3D1E14] items-center flex-row`}
       >
         <TextInput
-          value={value}
+          defaultValue={value}
           onChangeText={handleChangeText}
           placeholder={placeholder}
           {...props}
           className="flex-1 text-black text-[13px]"
           placeholderTextColor="#64748b"
           secureTextEntry={secureText === true && !showPassword}
-          multiline={multiline}
-          numberOfLines={numberOfLines}
+          multiline={multiline || false}
+          numberOfLines={numberOfLines || 1}
           autoCapitalize="none"
           keyboardType={numericKeyboard ? "numeric" : "default"}
         />
