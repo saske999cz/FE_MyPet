@@ -26,9 +26,13 @@ export const get_unadopted_pet_detail = async (petId) => {
   }
 };
 
-export const create_adoption_request = async (petId) => {
+export const create_adoption_request = async (petId, note) => {
+  if (note == "") note = "";
+  else note = "&note=" + note;
   try {
-    const response = await ApiManager.post(`/customer/adopt-pet/${petID}`);
+    const response = await ApiManager.post(
+      `/customer/adopt-pet/${petId}?${note}`
+    );
     return response;
   } catch (error) {
     return error.response.data;
