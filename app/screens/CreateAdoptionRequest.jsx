@@ -5,93 +5,19 @@ import {
   TouchableOpacity,
   Dimensions,
 } from "react-native";
-import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { icons, images, blurhash } from "../../constants";
+import { icons, blurhash } from "../../constants";
 import { router, useLocalSearchParams } from "expo-router";
 import FormField from "../../components/FormField";
 import { create_adoption_request } from "../../api/AdoptApi";
 import { Image } from "expo-image";
+import LottieView from "lottie-react-native";
 
 const screenWidth = Dimensions.get("window").width;
 const formWidth = screenWidth * 0.95;
 
-const StepperBar = ({ steps, currentStep }) => {
-  return (
-    <View
-      className={`h-12 w-[${formWidth}] flex-row items-center justify-center px-8`}
-    >
-      {steps.map((step, index) => {
-        return (
-          <View
-            className={`w-[${
-              screenWidth / 4
-            }] h-5 flex-row items-center justify-center`}
-            key={index}
-          >
-            <View
-              className={`h-6 w-6 flex-row items-center justify-center rounded-full  ${
-                currentStep === step || currentStep > step
-                  ? "bg-amber-400 border-[1px] border-solid border-orange-300"
-                  : "bg-gray-50 border-[1px] border-solid border-gray-300"
-              }`}
-            >
-              <Text
-                className={`text-[12px] font-bold ${
-                  currentStep === step || currentStep > step
-                    ? "text-white"
-                    : "text-black"
-                }`}
-              >
-                {step}
-              </Text>
-            </View>
-            {index < steps.length - 1 && (
-              <View
-                className={`w-20 h-[3px] ${
-                  currentStep > step ? "bg-amber-400" : "bg-gray-300"
-                }`}
-              ></View>
-            )}
-          </View>
-        );
-      })}
-    </View>
-  );
-};
-
-const BasicInfoScreen = () => {
-  return (
-    <View
-      className={`h-fit w-[${formWidth}] flex-col items-center justify-start px-4 mt-4`}
-    >
-      <Text className="text-[17px] font-semibold mb-4">
-        Personal Information
-      </Text>
-      <FormField
-        title="Full Name"
-        placeholder="Enter full name"
-        titleStyles="text-black font-[13px]"
-        otherStyles="mt-5"
-      />
-      <FormField
-        title="Phone Number"
-        placeholder="Enter phone number"
-        titleStyles="text-black font-[13px]"
-        otherStyles="mt-5"
-      />
-      <FormField
-        title="Email"
-        placeholder="Enter email"
-        titleStyles="text-black font-[13px]"
-        otherStyles="mt-5 mb-4"
-      />
-    </View>
-  );
-};
-
-const NoteScreen = () => {
+const NoteScreen = ({ data, setData }) => {
   return (
     <View
       className={`h-88 w-[${formWidth}] flex-col items-center justify-start px-4 mt-4`}
@@ -106,51 +32,59 @@ const NoteScreen = () => {
         multiline={true}
         numberOfLines={5}
         height={32}
+        value={data.notes}
+        onChangeText={(value) => setData(value)}
       />
     </View>
   );
 };
 
-const ScreenControler = ({ currentStep }) => {
-  switch (currentStep) {
-    case 1:
-      return <BasicInfoScreen />;
-    case 2:
-      return <NoteScreen />;
-    default:
-      return <BasicInfoScreen />;
-  }
-};
-
 const CreateAdoptionRequest = () => {
-  const { petId, petName, petAge, petGender, petImage } =
-    useLocalSearchParams();
-  const [currentStep, setCurrentStep] = useState(1);
+  const { petId, petName, petImage } = useLocalSearchParams();
+  const [data, setData] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [loadingText, setLoadingText] = useState("Creating request");
+  const [currentProccessText, setCurrentProccessText] = useState(". . .");
+  const intervalRef = useRef(null);
+
   const handleBack = () => {
     router.back();
   };
 
-  const handleNext = () => {
-    if (currentStep === 3) return;
-    setCurrentStep(currentStep + 1);
+  const startAnimation = () => {
+    if (!intervalRef.current) {
+      intervalRef.current = setInterval(() => {
+        setCurrentProccessText((prevText) => {
+          if (prevText === ". . .") return ".";
+          return prevText + " .";
+        });
+      }, 200);
+    }
   };
 
-  const handlePrev = () => {
-    if (currentStep === 1) return;
-    setCurrentStep(currentStep - 1);
+  const stopAnimation = () => {
+    clearInterval(intervalRef.current);
+    intervalRef.current = null;
   };
 
   const handleCreateAppointment = () => {
-    create_adoption_request.then((res) => {
+    setIsSending(true);
+    startAnimation();
+    create_adoption_request(petId, data).then((res) => {
       if (res.status === 200) {
-        router.replace("../(tabs)/adopt");
+        stopAnimation();
+        setLoadingText("Request created successfully");
+        setTimeout(() => {
+          setIsSending(false);
+          router.replace("../(tabs)/adopt");
+        }, 600);
       }
     });
   };
 
   return (
-    <SafeAreaView className="flex-1 items-center">
-      <View className="w-full h-12 flex-row items-center justify-center">
+    <View className="flex-1 items-center">
+      <View className="w-full h-12 flex-row items-center justify-center mt-[55px]">
         <TouchableOpacity
           className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
           onPress={handleBack}
@@ -165,6 +99,32 @@ const CreateAdoptionRequest = () => {
           Create Adoption Request
         </Text>
       </View>
+      {isSending && (
+        <View className="w-full h-full flex-row items-start justify-center absolute top-0 bottom-0 z-[12]">
+          <View className="w-full h-full bg-zinc-900/40 opacity-100 absolute top-0 bottom-0"></View>
+          <LottieView
+            style={{ width: 240, height: 240, marginTop: 250 }}
+            source={require("../../assets/lottie/sendingData.json")}
+            autoPlay
+            loop
+            speed={1.5}
+          />
+          <View className="w-full h-fit absolute top-[440px] flex-row items-center justify-center">
+            <View className="w-fit h-fit flex-row items-center justify-end">
+              <Text className="text-white text-[14px] font-semibold">
+                {loadingText}
+              </Text>
+            </View>
+            {currentProccessText !== "" && (
+              <View className="w-7 h-fit flex-row items-center justify-start ml-1">
+                <Text className="text-white text-[14px] font-semibold ">
+                  {currentProccessText}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
       <ScrollView className={`flex-1 w-full`}>
         <View
           className={`w-[${formWidth}] h-full items-center justify-center pt-5 mb-8`}
@@ -184,61 +144,23 @@ const CreateAdoptionRequest = () => {
             </View>
           </View>
           <View className="w-[95%] h-fit bg-white rounded-lg mt-2 flex-col items-center justify-start">
-            <StepperBar steps={[1, 2]} currentStep={currentStep} />
-            <ScreenControler currentStep={currentStep} />
+            <NoteScreen data={data} setData={setData} />
             <View
-              className={`w-full h-16 flex-row items-center justify-center px-4 mb-2 ${
-                currentStep === 2 ? "mt-8" : "mt-2"
-              }`}
+              className={`w-full h-16 flex-row items-center justify-center px-4 mb-2 mt-6`}
             >
-              {currentStep !== 1 && (
-                <TouchableOpacity
-                  className="w-20 h-10 rounded-md border-[0.5px] border-solid border-gray-200 flex-row items-center justify-center mr-4"
-                  disabled={currentStep === 1 ? true : false}
-                  onPress={handlePrev}
-                >
-                  <FontAwesomeIcon
-                    icon={icons.faArrowLeftLong}
-                    size={12}
-                    style={{ color: "#f59e0b" }}
-                  />
-                  <Text className="text-[14px] font-semibold text-gray-500 ml-1">
-                    Prev
-                  </Text>
-                </TouchableOpacity>
-              )}
-              {currentStep !== 2 && (
-                <TouchableOpacity
-                  className="w-20 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-4"
-                  onPress={handleNext}
-                  disabled={currentStep === 3 ? true : false}
-                >
-                  <Text className="text-[14px] font-semibold text-white mr-1">
-                    Next
-                  </Text>
-                  <FontAwesomeIcon
-                    icon={icons.faArrowRightLong}
-                    size={12}
-                    style={{ color: "#ffffff" }}
-                  />
-                </TouchableOpacity>
-              )}
-              {currentStep === 2 && (
-                <TouchableOpacity
-                  className="w-28 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-4"
-                  onPress={handleCreateAppointment}
-                  disabled={currentStep !== 3 ? true : false}
-                >
-                  <Text className="text-[14px] font-semibold text-white">
-                    Create
-                  </Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                className="w-28 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-4"
+                onPress={handleCreateAppointment}
+              >
+                <Text className="text-[14px] font-semibold text-white">
+                  Create
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
