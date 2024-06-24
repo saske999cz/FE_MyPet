@@ -303,7 +303,7 @@ const ReviewDetail = () => {
           </View>
         </View>
       )}
-      <View className="w-full h-12 flex-row items-center justify-center border-b-[0.5px] border-solid border-gray-300 mt-[55px]">
+      <View className="w-full h-12 flex-row items-center justify-center border-b-[0.5px] border-solid border-gray-300 mt-[55px] z-[10]">
         <TouchableOpacity
           className="w-12 h-12 flex-row items-center justify-center absolute top-0 left-0"
           onPress={handleBack}

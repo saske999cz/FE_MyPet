@@ -7,6 +7,7 @@ import { router } from "expo-router";
 import LottieView from "lottie-react-native";
 import DoctorReviewSection from "../../components/DoctorReviewSection";
 import { get_done_appointments } from "../../api/RatingApi";
+import { Image } from "expo-image";
 
 const DoctorReview = () => {
   const [appointments, setAppointments] = useState([]);
