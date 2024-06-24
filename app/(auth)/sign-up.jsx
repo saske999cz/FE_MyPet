@@ -38,9 +38,7 @@ const SignUp = () => {
     if (form.password !== form.confirm_password) {
       newErrors.confirm_password = "Passwords do not match";
     }
-    if (form.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    }
+
     if (form.password.length == 0) {
       newErrors.password = "Password is required";
     }
@@ -53,21 +51,21 @@ const SignUp = () => {
     } else {
       setIsSubmitting(true);
       router.replace("../screens/BasicAccountInfo");
-      // user_register({
-      //   username: form.username,
-      //   email: form.email,
-      //   password: form.password,
-      //   confirm_password: form.confirm_password,
-      // })
-      //   .then((res) => {
-      //     if (res.status === 201) {
-      //       setIsSubmitting(false);
-      //       router.replace("../screens/BasicAccountInfo");
-      //     }
-      //   })
-      //   .catch((err) => {
-      //     alert("Error: " + err.message);
-      //   });
+      user_register({
+        username: form.username,
+        email: form.email,
+        password: form.password,
+        confirm_password: form.confirm_password,
+      })
+        .then((res) => {
+          if (res.status === 201) {
+            setIsSubmitting(false);
+            router.replace("../screens/BasicAccountInfo");
+          }
+        })
+        .catch((err) => {
+          alert("Error: " + err.message);
+        });
     }
   };
 

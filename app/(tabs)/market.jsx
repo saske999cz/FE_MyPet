@@ -12,14 +12,16 @@ import { icons, images, blurhash } from "../../constants";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import ItemCard from "../../components/ItemCard";
 import SearchInput from "../../components/SearchInput";
-import Toast from "react-native-toast-message";
-import { setGlobalState, useGlobalState } from "../../state/GlobalState";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { get_best_selling_products, search_product } from "../../api/MarketApi";
+import {
+  get_best_selling_products,
+  search_product,
+  get_highest_rating_products,
+} from "../../api/MarketApi";
 import { Image } from "expo-image";
 import LottieView from "lottie-react-native";
 import { useGlobalContext } from "../../state/GlobalContextProvider";
+import Checkbox from "expo-checkbox";
 
 const Header_Max_Height = 230;
 const Header_Min_Height = 70;
@@ -34,12 +36,20 @@ const DynamicHeader = ({
   query,
   setQuery,
   handleSearch,
+  setFilterOption,
+  filterOption,
+  visibleFilter,
+  setVisibleFilter,
 }) => {
   const { userAvatar } = useGlobalContext();
 
   const handleCartPress = () => {
     router.push("../screens/Cart");
   };
+  const handleNavigateMyProfile = () => {
+    router.push("../screens/MyProfile");
+  };
+
   const animatedHeaderHeight = value.interpolate({
     inputRange: [0, Scroll_Distance],
     outputRange: [Header_Max_Height, Header_Min_Height],
@@ -147,7 +157,7 @@ const DynamicHeader = ({
       }}
     >
       <View className="w-full h-32 absolute top-0 left-0 right-0"></View>
-      <View className="w-full flex-col items-center justify-between px-4 mb-4 z-3">
+      <View className="w-full flex-col items-center justify-between px-4 mb-4 z-3 z-50">
         <View className="w-full flex-row items-center justify-between mb-3">
           <Animated.Image
             source={images.logoBlack}
@@ -177,12 +187,17 @@ const DynamicHeader = ({
               />
             </TouchableOpacity>
             {userAvatar && (
-              <Image
-                source={{ uri: userAvatar }}
+              <TouchableOpacity
                 className="w-9 h-9 rounded-full"
-                transition={0}
-                placeholder={{ blurhash }}
-              />
+                onPress={handleNavigateMyProfile}
+              >
+                <Image
+                  source={{ uri: userAvatar }}
+                  className="w-full h-full rounded-full"
+                  transition={0}
+                  placeholder={{ blurhash }}
+                />
+              </TouchableOpacity>
             )}
           </Animated.View>
         </View>
@@ -200,10 +215,27 @@ const DynamicHeader = ({
             handleSearch={handleSearch}
           />
           <Animated.View
-            className="w-10 h-10 rounded-lg ml-2"
+            className="w-10 h-10 rounded-lg ml-2 z-60"
             style={animatedLogo}
           >
-            <TouchableOpacity className="w-full h-full bg-[#e5e7eb] rounded-lg flex-row items-center justify-center">
+            <TouchableOpacity
+              className="w-full h-full bg-[#e5e7eb] rounded-lg flex-row items-center justify-center z-62"
+              onPress={() => setVisibleFilter(!visibleFilter)}
+            >
+              {visibleFilter && (
+                <Animated.View className=" absolute top-12 right-0 w-48 h-24 flex-col items-start justify-start px-2 py-2 bg-white rounded-lg shadow-md z-63">
+                  <View className="w-full h-fit flex-row items-center justify-start">
+                    <Checkbox
+                      value={filterOption}
+                      onValueChange={setFilterOption}
+                      color={filterOption ? "#f59e0b" : undefined}
+                    />
+                    <Text className="text-[13px] text-black ml-1">
+                      Highest rating products
+                    </Text>
+                  </View>
+                </Animated.View>
+              )}
               <FontAwesomeIcon
                 icon={icons.faFilter}
                 size={20}
@@ -230,7 +262,7 @@ const DynamicHeader = ({
         )}
       </View>
       <Animated.View
-        className="w-full flex-col items-start justify-center px-4 mb-3"
+        className="w-full flex-col items-start justify-center px-4 mb-3 z-40"
         style={{ opacity: animatedOpacity }}
       >
         <Text className="text-[15px] font-semibold mb-4">Categories</Text>
@@ -310,6 +342,8 @@ const market = () => {
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [maxPage, setMaxPage] = useState(1);
+  const [filterOption, setFilterOption] = useState(false);
+  const [visibleFilter, setVisibleFilter] = useState(false);
 
   const handleLoadMore = () => {
     if (page >= maxPage) {
@@ -343,8 +377,85 @@ const market = () => {
   };
 
   const onRefresh = async () => {
+    setProducts([]);
     setRefreshing(true);
-    // fetch data
+    setIsLoading(true);
+    if (page > 1) setPage(1);
+    else {
+      if (searching) {
+        search_product(query, page, 12)
+          .then((res) => {
+            if (res && res.status === 200 && res.data.data.length > 0) {
+              const newProducts = [...products, ...res.data.data];
+              const uniqueProducts = newProducts.reduce((unique, product) => {
+                if (!unique.find((item) => item.id === product.id)) {
+                  unique.push(product);
+                }
+                return unique;
+              }, []);
+              setProducts(uniqueProducts);
+              if (page === 1) {
+                setMaxPage(res.data.total_pages);
+              }
+              setIsLoading(false);
+            } else {
+              setProducts([]);
+              setIsLoading(false);
+              console.log("No data found.");
+            }
+          })
+          .catch((err) => {
+            alert(err.message);
+          });
+      } else if (filterOption) {
+        get_highest_rating_products(page, 12, activeCategory)
+          .then((res) => {
+            if (res && res.status === 200 && res.data.data.length > 0) {
+              const newProducts = [...products, ...res.data.data];
+              const uniqueProducts = newProducts.reduce((unique, product) => {
+                if (!unique.find((item) => item.id === product.id)) {
+                  unique.push(product);
+                }
+                return unique;
+              }, []);
+              setProducts(uniqueProducts);
+              if (page === 1) {
+                setMaxPage(res.data.total_pages);
+              }
+              setIsLoading(false);
+            } else {
+              setProducts([]);
+              setIsLoading(false);
+            }
+          })
+          .catch((err) => {
+            alert(err.message);
+          });
+      } else
+        get_best_selling_products(page, 12, activeCategory)
+          .then((res) => {
+            if (res && res.status === 200 && res.data.data.length > 0) {
+              const newProducts = [...products, ...res.data.data];
+              const uniqueProducts = newProducts.reduce((unique, product) => {
+                if (!unique.find((item) => item.id === product.id)) {
+                  unique.push(product);
+                }
+                return unique;
+              }, []);
+              setProducts(uniqueProducts);
+              if (page === 1) {
+                setMaxPage(res.data.total_pages);
+              }
+              setIsLoading(false);
+            } else {
+              setProducts([]);
+              setIsLoading(false);
+            }
+          })
+          .catch((err) => {
+            alert(err.message);
+          });
+    }
     setRefreshing(false);
   };
 
@@ -387,6 +498,30 @@ const market = () => {
         .catch((err) => {
           alert(err.message);
         });
+    } else if (filterOption) {
+      get_highest_rating_products(page, 12, activeCategory)
+        .then((res) => {
+          if (res && res.status === 200 && res.data.data.length > 0) {
+            const newProducts = [...products, ...res.data.data];
+            const uniqueProducts = newProducts.reduce((unique, product) => {
+              if (!unique.find((item) => item.id === product.id)) {
+                unique.push(product);
+              }
+              return unique;
+            }, []);
+            setProducts(uniqueProducts);
+            if (page === 1) {
+              setMaxPage(res.data.total_pages);
+            }
+            setIsLoading(false);
+          } else {
+            setProducts([]);
+            setIsLoading(false);
+          }
+        })
+        .catch((err) => {
+          alert(err.message);
+        });
     } else
       get_best_selling_products(page, 12, activeCategory)
         .then((res) => {
@@ -411,13 +546,13 @@ const market = () => {
         .catch((err) => {
           alert(err.message);
         });
-  }, [page, activeCategory, searching]);
+  }, [page, activeCategory, searching, filterOption]);
 
   useEffect(() => {
     setIsLoading(true);
     setProducts([]);
     setPage(1);
-  }, [activeCategory]);
+  }, [activeCategory, filterOption]);
 
   return (
     <SafeAreaView className="w-full h-full flex-col">
@@ -430,6 +565,10 @@ const market = () => {
         query={query}
         setQuery={setQuery}
         handleSearch={handleSearch}
+        visibleFilter={visibleFilter}
+        setVisibleFilter={setVisibleFilter}
+        filterOption={filterOption}
+        setFilterOption={setFilterOption}
       />
       {isLoading ? (
         <View className="w-full h-full flex-row items-start justify-center">
@@ -438,7 +577,7 @@ const market = () => {
             source={require("../../assets/lottie/loading.json")}
             autoPlay
             loop
-            speed={1.5}
+            speed={2}
           />
         </View>
       ) : products && products.length > 0 ? (
@@ -457,6 +596,7 @@ const market = () => {
                 soldUnits={item.sold_quantity}
                 shop={item.shop}
                 isHorizontal={false}
+                quantity={item.quantity}
               />
             </View>
           )}
@@ -473,6 +613,7 @@ const market = () => {
             [{ nativeEvent: { contentOffset: { y: scrollOffsetY } } }],
             {
               useNativeDriver: false,
+              listener: () => setVisibleFilter(false),
             }
           )}
           onEndReached={handleLoadMore}

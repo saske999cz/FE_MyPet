@@ -3,22 +3,18 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Image,
   Dimensions,
 } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { icons } from "../../constants";
-import { images } from "../../constants";
+import { icons, images, blurhash } from "../../constants";
 import { router, useLocalSearchParams } from "expo-router";
 import FormField from "../../components/FormField";
-import { PetDummy } from "../../dummy/FakeData";
-import DropDownBox from "../../components/PetDropDownBox";
-import CalendarPicker from "react-native-calendar-picker";
+import { create_adoption_request } from "../../api/AdoptApi";
+import { Image } from "expo-image";
 
 const screenWidth = Dimensions.get("window").width;
-const screenHeight = Dimensions.get("window").height;
 const formWidth = screenWidth * 0.95;
 
 const StepperBar = ({ steps, currentStep }) => {
@@ -66,7 +62,6 @@ const StepperBar = ({ steps, currentStep }) => {
 };
 
 const BasicInfoScreen = () => {
-  const [pet, setPet] = useState(null);
   return (
     <View
       className={`h-fit w-[${formWidth}] flex-col items-center justify-start px-4 mt-4`}
@@ -96,39 +91,7 @@ const BasicInfoScreen = () => {
   );
 };
 
-const AdoptionDateScreen = () => {
-  const [time, setTime] = useState(null);
-  const [date, setDate] = useState(null);
-  const [selectedTime, setSelectedTime] = useState(null);
-  const onDateChange = (date) => {
-    setDate(date);
-  };
-
-  return (
-    <View
-      className={`h-fit w-[${formWidth}] flex-col items-center justify-start px-4 mt-4 relative`}
-    >
-      <View className="w-full h-10 flex-row items-center justify-center">
-        <Text className="text-[17px] font-semibold mb-4 mr-20">
-          Select Date
-        </Text>
-      </View>
-      <View className="w-full h-52 flex-row items-center justify-start mt-4">
-        <CalendarPicker
-          onDateChange={(date) => {
-            onDateChange(date);
-          }}
-          width={formWidth * 0.85}
-          minDate={new Date().getTime()}
-          selectedDayColor="#fbbf24"
-        />
-      </View>
-    </View>
-  );
-};
-
 const NoteScreen = () => {
-  const optional = " (Optional)";
   return (
     <View
       className={`h-88 w-[${formWidth}] flex-col items-center justify-start px-4 mt-4`}
@@ -153,8 +116,6 @@ const ScreenControler = ({ currentStep }) => {
     case 1:
       return <BasicInfoScreen />;
     case 2:
-      return <AdoptionDateScreen />;
-    case 3:
       return <NoteScreen />;
     default:
       return <BasicInfoScreen />;
@@ -162,8 +123,9 @@ const ScreenControler = ({ currentStep }) => {
 };
 
 const CreateAdoptionRequest = () => {
-  const { petId, petName, petAge, petGender } = useLocalSearchParams();
-  const [currentStep, setCurrentStep] = React.useState(1);
+  const { petId, petName, petAge, petGender, petImage } =
+    useLocalSearchParams();
+  const [currentStep, setCurrentStep] = useState(1);
   const handleBack = () => {
     router.back();
   };
@@ -178,7 +140,13 @@ const CreateAdoptionRequest = () => {
     setCurrentStep(currentStep - 1);
   };
 
-  const handleCreateAppointment = () => {};
+  const handleCreateAppointment = () => {
+    create_adoption_request.then((res) => {
+      if (res.status === 200) {
+        router.replace("../(tabs)/adopt");
+      }
+    });
+  };
 
   return (
     <SafeAreaView className="flex-1 items-center">
@@ -205,8 +173,10 @@ const CreateAdoptionRequest = () => {
             <View className="w-full h-[8%] bg-amber-400 rounded-t-lg"></View>
             <View className="w-full h-[92%] flex-row items-center justify-start px-4">
               <Image
-                source={images.adopt1}
+                source={{ uri: petImage }}
                 className="w-12 h-12 rounded-full"
+                placeholder={{ blurhash }}
+                transition={0}
               />
               <Text className="text-[15px] font-semibold text-black ml-2">
                 {petName}
@@ -214,7 +184,7 @@ const CreateAdoptionRequest = () => {
             </View>
           </View>
           <View className="w-[95%] h-fit bg-white rounded-lg mt-2 flex-col items-center justify-start">
-            <StepperBar steps={[1, 2, 3]} currentStep={currentStep} />
+            <StepperBar steps={[1, 2]} currentStep={currentStep} />
             <ScreenControler currentStep={currentStep} />
             <View
               className={`w-full h-16 flex-row items-center justify-center px-4 mb-2 ${
@@ -237,7 +207,7 @@ const CreateAdoptionRequest = () => {
                   </Text>
                 </TouchableOpacity>
               )}
-              {currentStep !== 3 && (
+              {currentStep !== 2 && (
                 <TouchableOpacity
                   className="w-20 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-4"
                   onPress={handleNext}
@@ -253,7 +223,7 @@ const CreateAdoptionRequest = () => {
                   />
                 </TouchableOpacity>
               )}
-              {currentStep === 3 && (
+              {currentStep === 2 && (
                 <TouchableOpacity
                   className="w-28 h-10 rounded-md bg-amber-400 flex-row items-center justify-center ml-4"
                   onPress={handleCreateAppointment}

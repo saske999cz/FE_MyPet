@@ -10,7 +10,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
 import { router } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { get_current_cart } from "../../api/CartApi";
 import LottieView from "lottie-react-native";
 import { useGlobalContext } from "../../state/GlobalContextProvider";
@@ -20,8 +19,14 @@ const Cart = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [shops, setShops] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { cartId, cartChanged, cartLength, setCheckOutItems, quantityChanged } =
-    useGlobalContext();
+  const {
+    cartId,
+    cartChanged,
+    cartLength,
+    setCheckOutItems,
+    quantityChanged,
+    setNumberOfSubOrders,
+  } = useGlobalContext();
   const [removedShopId, setRemovedShopId] = useState(null);
   const [totalAmount, setTotalAmount] = useState(0);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -36,6 +41,7 @@ const Cart = () => {
       get_current_cart().then((res) => {
         if (res && res.status === 200) {
           setShops([...res.data.shops]);
+          setNumberOfSubOrders(res.data.shops.length);
           setTotalAmount(res.data.cart.total_prices);
           setIsLoading(false);
           setIsCalculating(false);
@@ -62,6 +68,10 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
+    if (cartLength === 0) {
+      alert("Can't check out. Your cart is empty!");
+      return;
+    }
     const combinedCartItems = shops.reduce((acc, shop) => {
       return acc.concat(shop.cart_items);
     }, []);
@@ -104,7 +114,7 @@ const Cart = () => {
             source={require("../../assets/lottie/loading.json")}
             autoPlay
             loop
-            speed={1.5}
+            speed={2}
           />
         </View>
       ) : (

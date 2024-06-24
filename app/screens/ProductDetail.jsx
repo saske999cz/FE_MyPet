@@ -9,8 +9,8 @@ import { useGlobalContext } from "../../state/GlobalContextProvider";
 import {
   get_product_detail_by_id,
   get_best_selling_products_by_category,
-  get_product_reviews,
 } from "../../api/MarketApi";
+import { get_product_reviews } from "../../api/RatingApi";
 import { FIREBASE_STORAGE } from "../../firebaseConfig";
 import { getDownloadURL, ref, listAll } from "firebase/storage";
 import { ProductDetailLoader } from "../../components/CustomLoader";
@@ -80,7 +80,7 @@ const ProductDetail = () => {
         } else if (res && res.message === "Insufficient product quantity") {
           setIsAddingToCart(false);
           alert(
-            "Can't add this product to cart because the quantity of this product in your cart is already equal to the quantity in stock!"
+            "Can't add this product to cart because the quantity of this product in stock is not enough!"
           );
         } else {
           console.log("Error adding item to cart:", res.message);
@@ -344,6 +344,21 @@ const ProductDetail = () => {
                         : productDetail.quantity + " in stock"}
                     </Text>
                   </View>
+                  {rating > 4 && productDetail.sold_quantity > 48 && (
+                    <View className="w-fit h-4 flex-row items-center justify-start bg-orange-500 rounded-[3px] pl-2 pr-1 ml-3">
+                      <Text className="text-[10px] text-white font-semibold mr-1">
+                        Top seller
+                      </Text>
+                      <View className="w-4 h-4 rounded-full bg-white flex-row items-center justify-center">
+                        <LottieView
+                          style={{ width: 22, height: 22, marginTop: -10 }}
+                          source={require("../../assets/lottie/fire.json")}
+                          autoPlay
+                          speed={1.5}
+                        />
+                      </View>
+                    </View>
+                  )}
                 </View>
                 <View className="w-full flex-row items-center justify-start mb-4 mt-3">
                   <FontAwesomeIcon
@@ -406,7 +421,7 @@ const ProductDetail = () => {
               <View className="w-full h-fit">
                 <View className="w-full h-12 mt-2 flex-row items-center justify-between px-4">
                   <Text className="font-semibold text-[14px]">{`Reviews (${totalReviews})`}</Text>
-                  {reviews.length > 3 && (
+                  {reviews.length >= 3 && (
                     <TouchableOpacity
                       className="w-16 h-10 flex-row items-center justify-center"
                       onPress={handleReviewPress}
@@ -433,7 +448,7 @@ const ProductDetail = () => {
                     />
                   ))}
                 </View>
-                {reviews.length > 3 && (
+                {reviews.length >= 3 ? (
                   <TouchableOpacity
                     className="w-full h-10 flex-row items-center justify-center mt-1"
                     onPress={handleReviewPress}
@@ -447,6 +462,10 @@ const ProductDetail = () => {
                       style={{ color: "#f59e0b" }}
                     />
                   </TouchableOpacity>
+                ) : (
+                  <View className="w-full h-6 flex-row items-center justify-center mt-2">
+                    <Text className="text-[13px]">No more reviews to show</Text>
+                  </View>
                 )}
               </View>
             )}

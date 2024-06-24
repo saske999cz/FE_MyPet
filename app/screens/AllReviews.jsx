@@ -13,9 +13,16 @@ const AllReviews = () => {
   const { productId, totalReviews } = useLocalSearchParams();
   const [reviews, setReviews] = useState([]);
   const [page, setPage] = useState(1);
+  const [maxPage, setMaxPage] = useState(1);
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handleLoadMore = () => {
+    if (page < maxPage) {
+      setPage((prevPage) => prevPage + 1);
+    }
   };
 
   useEffect(() => {
@@ -31,6 +38,7 @@ const AllReviews = () => {
               return unique;
             }, []);
             setReviews(uniqueReviews);
+            setMaxPage(res.data.total_pages);
           }
         });
       } catch (error) {
@@ -39,10 +47,6 @@ const AllReviews = () => {
     };
     getReviews();
   }, [page]);
-
-  const handleLoadMore = () => {
-    setPage((prevPage) => prevPage + 1);
-  };
 
   return (
     <SafeAreaView className="h-full w-full">
@@ -75,7 +79,7 @@ const AllReviews = () => {
           keyExtractor={(item) => item.rating_id}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
-          scrollEventThrottle={2}
+          scrollEventThrottle={16}
         />
       )}
     </SafeAreaView>

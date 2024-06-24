@@ -6,7 +6,6 @@ import {
   ScrollView,
 } from "react-native";
 import React, { useState, useEffect } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons, blurhash } from "../../constants";
 import { router, useLocalSearchParams } from "expo-router";
@@ -20,6 +19,8 @@ import {
   get_medical_center_detail_by_id,
   get_highest_rating_medical_centers,
 } from "../../api/MedicalCenterApi";
+import { get_medical_center_reviews } from "../../api/RatingApi";
+import Review from "../../components/Review";
 
 function calculateAge(birthday) {
   const birthDate = new Date(birthday);
@@ -47,6 +48,7 @@ const MedicalCenterDetail = () => {
     medicalCenterTelephone,
     medicalCenterImage,
     medicalCenterDescription,
+    medicalCenterAddress,
   } = useLocalSearchParams();
   const [mainImage, setMainImage] = useState(null);
   const [imageUrls, setImageUrls] = useState([]);
@@ -57,9 +59,21 @@ const MedicalCenterDetail = () => {
   const [similarClinics, setSimilarClinics] = useState(null);
   const [flags, setFlags] = useState([]);
   const [doctors, setDoctors] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   const handleBack = () => {
     router.back();
+  };
+
+  const handleReviewPress = () => {
+    router.push({
+      pathname: "../screens/AllMedicalCenterReviews",
+      params: {
+        medicalCenterId: medicalCenterId,
+        totalReviews: totalReviews,
+      },
+    });
   };
 
   const handleProductImagePress = (image) => {
@@ -85,6 +99,17 @@ const MedicalCenterDetail = () => {
       pathname: "../screens/SimilarClinics",
       params: {
         medicalCenterId: medicalCenterId,
+      },
+    });
+  };
+
+  const handleOpenMap = () => {
+    router.push({
+      pathname: "../screens/CustomMap",
+      params: {
+        medicalCenterAddress: medicalCenterAddress,
+        medicalCenterName: medicalCenterName,
+        image: encodeURIComponent(mainImage),
       },
     });
   };
@@ -158,7 +183,24 @@ const MedicalCenterDetail = () => {
   }, [folderUrl]);
 
   useEffect(() => {
-    if (flags.length === 3 && flags.every((flag) => flag === true)) {
+    const fetchReviews = async () => {
+      try {
+        get_medical_center_reviews(medicalCenterId, 1, 5).then((res) => {
+          if (res && res.status === 200) {
+            setReviews(res.data.data);
+            setTotalReviews(res.data.total_ratings);
+            setFlags((prev) => [...prev, true]);
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+    };
+    fetchReviews();
+  }, []);
+
+  useEffect(() => {
+    if (flags.length === 4 && flags.every((flag) => flag === true)) {
       setTimeout(() => {
         setIsLoading(false);
       }, 300);
@@ -167,7 +209,7 @@ const MedicalCenterDetail = () => {
 
   return (
     <View className="h-full">
-      <View className="w-full h-10 flex-row items-center justify-center mb-2 mt-10 border-b-[0.5px] border-solid border-gray-200">
+      <View className="w-full h-10 flex-row items-center justify-center mb-2 mt-[55px] border-b-[0.5px] border-solid border-gray-200">
         <TouchableOpacity
           className="w-12 h-10 flex-row items-center justify-center absolute top-0 left-0"
           onPress={handleBack}
@@ -257,16 +299,28 @@ const MedicalCenterDetail = () => {
                   </View>
 
                   <View className="w-[1px] h-3 bg-gray-300 ml-2"></View>
-                  <View className="w-full flex-row items-center justify-start ml-2">
+                  <View className="w-fit flex-row items-center justify-start ml-2">
                     <FontAwesomeIcon
                       icon={icons.faLocationDot}
                       size={10}
                       style={{ color: "#ef4444" }}
                     />
-                    <Text className="text-[10px] ml-[1px]">
-                      {medicalCenterDistance}
+                    <Text
+                      className="text-[10px] ml-[1px]"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {medicalCenterAddress}
                     </Text>
                   </View>
+                  <TouchableOpacity
+                    className="w-[60px] h-fit flex-row items-center justify-center ml-3"
+                    onPress={handleOpenMap}
+                  >
+                    <Text className="text-[11px] text-blue-500 font-semibold">
+                      Open map
+                    </Text>
+                  </TouchableOpacity>
                 </View>
 
                 <View className="w-full flex-row items-center justify-start">
@@ -291,6 +345,60 @@ const MedicalCenterDetail = () => {
                 {medicalCenterDescription}
               </Text>
             </View>
+            <View className="w-full h-[4px] bg-gray-300 mt-5"></View>
+            {reviews && (
+              <View className="w-full h-fit">
+                <View className="w-full h-12 mt-2 flex-row items-center justify-between px-4">
+                  <Text className="font-semibold text-[14px]">{`Reviews (${totalReviews})`}</Text>
+                  {reviews.length >= 3 && (
+                    <TouchableOpacity
+                      className="w-16 h-10 flex-row items-center justify-center"
+                      onPress={handleReviewPress}
+                    >
+                      <Text className="text-[14px] text-[#f59e0b] mr-1">
+                        See all
+                      </Text>
+                      <FontAwesomeIcon
+                        icon={icons.faChevronRight}
+                        size={12}
+                        style={{ color: "#f59e0b" }}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <View className="w-full h-fit">
+                  {reviews.slice(0, 2).map((review) => (
+                    <Review
+                      key={review.rating_id}
+                      avatar={review.customer_avatar}
+                      username={review.customer_username}
+                      rating={review.rating_score}
+                      review={review.description}
+                      type="medical_center"
+                    />
+                  ))}
+                </View>
+                {reviews.length >= 3 ? (
+                  <TouchableOpacity
+                    className="w-full h-10 flex-row items-center justify-center mt-1"
+                    onPress={handleReviewPress}
+                  >
+                    <Text className="text-[14px] text-[#f59e0b] mr-1">
+                      See all
+                    </Text>
+                    <FontAwesomeIcon
+                      icon={icons.faChevronRight}
+                      size={12}
+                      style={{ color: "#f59e0b" }}
+                    />
+                  </TouchableOpacity>
+                ) : (
+                  <View className="w-full h-6 flex-row items-center justify-center mt-4">
+                    <Text className="text-[13px]">No more reviews to show</Text>
+                  </View>
+                )}
+              </View>
+            )}
             <View className="w-full h-[4px] bg-gray-300 mt-5"></View>
             <View className="w-full px-4 mt-4">
               <View className="w-full flex-col items-start justify-start">
@@ -321,7 +429,7 @@ const MedicalCenterDetail = () => {
               </View>
             </View>
             <View className="w-full h-[4px] bg-gray-300 mt-5"></View>
-            <View className="w-full px-4 h-fit">
+            <View className="w-full px-4 h-fit pb-5">
               <View className="w-full flex-row items-center justify-between">
                 <Text className="font-semibold text-[14px] mb-2 mt-4">
                   Other Medical Centers

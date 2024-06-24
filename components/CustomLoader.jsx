@@ -68,3 +68,20 @@ export const PetLoader = () => (
     <Rect x="70" y="30" rx="3" ry="3" width="200" height="20" />
   </ContentLoader>
 );
+
+export const PostLoader = () => (
+  <ContentLoader
+    speed={1}
+    width={500}
+    height={300}
+    viewBox="0 0 500 300"
+    backgroundColor="#dcdcdc"
+    foregroundColor="#9ca3af"
+  >
+    <Rect x="20" y="0" rx="50" ry="50" width="40" height="40" />
+    <Rect x="70" y="0" rx="4" ry="4" width="200" height="20" />
+    <Rect x="70" y="30" rx="3" ry="3" width="200" height="20" />
+    <Rect x="20" y="70" rx="3" ry="3" width="340" height="20" />
+    <Rect x="20" y="100" rx="3" ry="3" width="340" height="20" />
+  </ContentLoader>
+);

@@ -7,7 +7,7 @@ import { FIREBASE_STORAGE } from "../firebaseConfig";
 import { getDownloadURL, ref, listAll } from "firebase/storage";
 import { ReviewLoader } from "./CustomLoader";
 
-const Review = ({ username, review, rating, avatar }) => {
+const Review = ({ username, review, rating, avatar, type }) => {
   const [imageUrl, setImageUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -39,17 +39,29 @@ const Review = ({ username, review, rating, avatar }) => {
                 className="w-full h-full rounded-full"
                 placeholder={{ blurhash }}
                 contentFit="cover"
-                transition={200}
-                cachePolicy="memory-disk"
+                transition={0}
               />
             </View>
             <View className="w-40 h-10 flex-col items-start justify-center ml-2">
               <Text className="text-[13px] font-semibold">{username}</Text>
               <View className="w-10 h-fit flex-row items-center justify-start mt-1">
                 <FontAwesomeIcon
-                  icon={icons.faHeart}
+                  icon={
+                    type === "medical_center" ||
+                    type === "doctor" ||
+                    type === "shop"
+                      ? icons.faStar
+                      : icons.faHeart
+                  }
                   size={10}
-                  style={{ color: "#f43f5e" }}
+                  style={{
+                    color:
+                      type === "medical_center" ||
+                      type === "doctor" ||
+                      type === "shop"
+                        ? "#fbbf24"
+                        : "#f43f5e",
+                  }}
                 />
                 <Text className="text-[12px] ml-1">
                   {parseFloat(rating).toFixed(1)}

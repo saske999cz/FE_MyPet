@@ -1,8 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
+const endpointURL = process.env.END_POINT_URL;
+
 const ApiManager = axios.create({
-  baseURL: "https://gostoblogger.site/api",
+  baseURL: `${endpointURL}`,
   withCredentials: true,
 });
 

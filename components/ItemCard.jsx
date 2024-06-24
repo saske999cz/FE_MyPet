@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import React, { useState, useEffect, useMemo, memo } from "react";
+import React, { useState, useEffect, memo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons, blurhash } from "../constants";
 import { router } from "expo-router";
@@ -7,6 +7,7 @@ import { FIREBASE_STORAGE } from "../firebaseConfig";
 import { getDownloadURL, ref, listAll } from "firebase/storage";
 import { CustomLoader } from "./CustomLoader";
 import { Image } from "expo-image";
+import LottieView from "lottie-react-native";
 
 const ItemCard = ({
   id,
@@ -18,6 +19,7 @@ const ItemCard = ({
   shop,
   isHorizontal,
   description,
+  quantity,
 }) => {
   const [imageUrl, setImageUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,15 +87,32 @@ const ItemCard = ({
                 {title}
               </Text>
             </View>
-            <View className="flex-row items-center justify-start mb-1">
-              <FontAwesomeIcon
-                icon={icons.faDongSign}
-                size={13}
-                style={{ color: "#f59e0b" }}
-              />
-              <Text className="text-[15px] text-[#fb923c] font-semibold">
-                {parseInt(price).toLocaleString("vi-VN")}
-              </Text>
+            <View className="flex-row items-center justify-between mb-1">
+              <View className="w-[53%] h-full flex-row items-center justify-start -ml-[2px]">
+                <FontAwesomeIcon
+                  icon={icons.faDongSign}
+                  size={13}
+                  style={{ color: "#f59e0b" }}
+                />
+                <Text className="text-[15px] text-[#fb923c] font-semibold mr-3">
+                  {parseInt(price).toLocaleString("vi-VN")}
+                </Text>
+              </View>
+              {rating > 4 && soldUnits > 48 && (
+                <View className="w-fit h-4 flex-row items-center justify-start bg-orange-500 rounded-[3px] pl-2 pr-1">
+                  <Text className="text-[10px] text-white font-semibold mr-1">
+                    Top seller
+                  </Text>
+                  <View className="w-4 h-4 rounded-full bg-white flex-row items-center justify-center">
+                    <LottieView
+                      style={{ width: 22, height: 22, marginTop: -10 }}
+                      source={require("../assets/lottie/fire.json")}
+                      autoPlay
+                      speed={1.5}
+                    />
+                  </View>
+                </View>
+              )}
             </View>
             <View className="flex-row w-full items-center justify-start mb-2">
               <View className="rounded-[3px] bg-pink-100 flex-row items-center justiify-center px-[3px] py-[2px] border-[1px] border-solid border-pink-400">
@@ -109,6 +128,15 @@ const ItemCard = ({
 
               <View className="w-[1px] h-3 bg-gray-300 ml-1"></View>
               <Text className="text-[10px] ml-1">{soldUnits} sold</Text>
+              {quantity === 0 && (
+                <View
+                  className={`w-fit flex-row items-center justify-center bg-red-500 ml-2 px-1 rounded-[3px] h-4`}
+                >
+                  <Text className={`text-white font-semibold text-[10px]`}>
+                    Out of stock
+                  </Text>
+                </View>
+              )}
             </View>
             <View className="w-full flex-row items-center justify-start">
               <FontAwesomeIcon

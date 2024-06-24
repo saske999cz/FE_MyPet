@@ -11,8 +11,6 @@ import { images, icons } from "../../constants";
 import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
 import { Link, router } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import ApiManager from "../../api/ApiManager";
 import { Image } from "expo-image";
 import RNPickerSelect from "react-native-picker-select";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";

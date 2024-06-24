@@ -1,7 +1,6 @@
 import { PAYPAL_CLIENT_ID, PAYPAL_SECRET_KEY } from "@env";
 import base64 from "react-native-base64";
 import axios from "axios";
-import { parse } from "date-fns";
 const baseUrl = "https://api-m.sandbox.paypal.com";
 
 const generateToken = () => {
@@ -50,9 +49,9 @@ const createOrder = (token = "", orderDetail) => {
   });
 };
 
-const capturePayment = (id, token = "") => {
-  var requestOptions = {
-    method: "post",
+const capturePayment = (id, token) => {
+  const requestOptions = {
+    method: "POST",
     url: baseUrl + `/v2/checkout/orders/${id}/capture`,
     headers: {
       "Content-Type": "application/json",
@@ -73,7 +72,7 @@ const capturePayment = (id, token = "") => {
   });
 };
 
-function convertPricesToUSD(cartItems) {
+function convertPricesToUSD(cartItems, numberOfSubOrders) {
   const conversionRate = 25400;
   const cartItemsInUSD = cartItems.map((item) => {
     const priceInUSD = (item.price / conversionRate).toFixed(2);
@@ -92,7 +91,9 @@ function convertPricesToUSD(cartItems) {
     (acc, item) => acc + item.price * parseFloat(item.quantity || 1),
     0
   );
-
+  const transportFee = parseFloat(
+    (parseFloat(30000 / conversionRate) * numberOfSubOrders).toFixed(2)
+  );
   const transactionFee = parseFloat((totalAmount * 0.04 + 0.5).toFixed(2));
 
   const finalItems = [
@@ -103,18 +104,29 @@ function convertPricesToUSD(cartItems) {
       quantity: "1",
       price: transactionFee,
     },
+    {
+      name: "Transport Fee",
+      description: "Transport Fee",
+      quantity: "1",
+      price: transportFee,
+    },
   ];
 
   return finalItems;
 }
 
-const createOrderDetail = (cartItems) => {
-  const itemsInUSD = convertPricesToUSD(cartItems);
+const createOrderDetail = (cartItems, numberOfSubOrders) => {
+  const itemsInUSD = convertPricesToUSD(cartItems, numberOfSubOrders);
   const baseTotal = itemsInUSD
-    .slice(0, -1)
+    .slice(0, -2)
     .reduce((acc, item) => acc + item.price * item.quantity, 0);
   const transactionFee = parseFloat((baseTotal * 0.04).toFixed(2)) + 0.5;
-  const totalAmount = parseFloat((baseTotal + transactionFee).toFixed(2));
+  const transportFee = parseFloat(
+    ((30000 / 25400) * numberOfSubOrders).toFixed(2)
+  );
+  const totalAmount = parseFloat(
+    (baseTotal + transactionFee + transportFee).toFixed(2)
+  );
 
   return {
     intent: "CAPTURE",

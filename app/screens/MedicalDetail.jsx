@@ -3,9 +3,10 @@ import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons } from "../../constants";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 
 const MedicalDetail = () => {
+  const { date, reason, diagnosis, treatment, notes } = useLocalSearchParams();
   const handleBack = () => {
     router.back();
   };
@@ -32,7 +33,7 @@ const MedicalDetail = () => {
               <Text className="text-[14px] font-semibold">Date: </Text>
             </View>
             <View className="w-[75%] flex-row items-center justify-start">
-              <Text className="text-[14px] ml-1">12/12/2021</Text>
+              <Text className="text-[14px] ml-1">{date}</Text>
             </View>
           </View>
           <View className="w-full flex-row items-center justify-start mt-8 px-2 h-fit">
@@ -41,7 +42,7 @@ const MedicalDetail = () => {
             </View>
             <View className="w-[75%] flex-row items-center justify-start h-fit">
               <Text className="text-[14px] ml-1">
-                Lameness (right hind leg)
+                {reason || "No reason provided"}
               </Text>
             </View>
           </View>
@@ -50,7 +51,7 @@ const MedicalDetail = () => {
               <Text className="text-[14px] font-semibold">Diagnosis: </Text>
             </View>
             <View className="w-[75%] flex-row items-center justify-start h-fit">
-              <Text className="text-[14px] ml-1">Mild sprain</Text>
+              <Text className="text-[14px] ml-1">{diagnosis}</Text>
             </View>
           </View>
           <View className="w-full flex-row items-center justify-start mt-8 px-2 h-fit">
@@ -59,7 +60,7 @@ const MedicalDetail = () => {
             </View>
             <View className="w-[75%] flex-row items-center justify-start h-fit">
               <Text className="text-[14px] ml-1">
-                Rest, anti-inflammatory meds
+                {treatment || "No treatment provided"}
               </Text>
             </View>
           </View>
@@ -69,7 +70,7 @@ const MedicalDetail = () => {
             </View>
             <View className="w-[75%] flex-row items-center justify-start h-fit">
               <Text className="text-[14px] ml-1">
-                Full recovery within a week
+                {notes || "No notes provided"}
               </Text>
             </View>
           </View>

@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity } from "react-native";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { icons, blurhash } from "../constants";
 import { Image } from "expo-image";
@@ -60,4 +60,4 @@ const MyPetCard = ({ pet }) => {
   );
 };
 
-export default MyPetCard;
+export default memo(MyPetCard);

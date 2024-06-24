@@ -20,6 +20,7 @@ import {
 import { Image } from "expo-image";
 import LottieView from "lottie-react-native";
 import { useGlobalContext } from "../../state/GlobalContextProvider";
+import { router } from "expo-router";
 
 const Header_Max_Height = 144;
 const Header_Min_Height = 70;
@@ -60,14 +61,14 @@ const DynamicHeader = ({
       {
         translateX: value.interpolate({
           inputRange: [0, Scroll_Distance - 40],
-          outputRange: [0, -55],
+          outputRange: [0, -75],
           extrapolate: "clamp",
         }),
       },
       {
         scaleX: value.interpolate({
           inputRange: [0, Scroll_Distance - 40],
-          outputRange: [1, 0.68],
+          outputRange: [1, 0.55],
           extrapolate: "clamp",
         }),
       },
@@ -136,23 +137,11 @@ const DynamicHeader = ({
           <SearchInput
             title="Search"
             placeholder="Search"
-            otherStyles={"w-[88%]"}
+            otherStyles={"w-full"}
             value={query}
             onChangeText={(text) => setQuery(text)}
             handleSearch={handleSearch}
           />
-          <Animated.View
-            className="w-10 h-10 rounded-lg ml-2"
-            style={animatedLogo}
-          >
-            <TouchableOpacity className="w-full h-full bg-[#e5e7eb] rounded-lg flex-row items-center justify-center ">
-              <FontAwesomeIcon
-                icon={icons.faFilter}
-                size={20}
-                style={{ color: "#000000" }}
-              />
-            </TouchableOpacity>
-          </Animated.View>
         </Animated.View>
         {isScrolled && (
           <Animated.View
@@ -182,14 +171,79 @@ const apointment = () => {
   const [clinics, setClinics] = useState([]);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState("");
+  const [searching, setSearching] = useState(false);
   const [maxPage, setMaxPage] = useState(1);
   const [showModal, setShowModal] = useState(false);
+
   const onRefresh = async () => {
+    setClinics([]);
     setRefreshing(true);
-    // fetch data
+    setIsLoading(true);
+    if (page > 1) setPage(1);
+    else {
+      if (searching) {
+        search_medical_centers(query, page, 10)
+          .then((res) => {
+            if (res && res.status === 200 && res.data.data.length > 0) {
+              const newClinics = [...clinics, ...res.data.data];
+              const uniqueClinics = newClinics.reduce((unique, clinic) => {
+                if (
+                  !unique.find(
+                    (item) =>
+                      item.medical_center_id === clinic.medical_center_id
+                  )
+                ) {
+                  unique.push(clinic);
+                }
+                return unique;
+              }, []);
+              setClinics(uniqueClinics);
+              setMaxPage(res.data.total_pages);
+              setIsLoading(false);
+            } else {
+              setClinics([]);
+              setIsLoading(false);
+            }
+          })
+          .catch((err) => {
+            alert(err.message);
+          });
+      } else
+        get_highest_rating_medical_centers(page, 10)
+          .then((res) => {
+            if (res && res.status === 200 && res.data.data.length > 0) {
+              const newClinics = [...clinics, ...res.data.data];
+              const uniqueClinics = newClinics.reduce((unique, clinic) => {
+                if (
+                  !unique.find(
+                    (item) =>
+                      item.medical_center_id === clinic.medical_center_id
+                  )
+                ) {
+                  unique.push(clinic);
+                }
+                return unique;
+              }, []);
+              setClinics(uniqueClinics);
+              if (page === 1) {
+                setMaxPage(res.data.total_pages);
+              }
+              setIsLoading(false);
+            } else {
+              setClinics([]);
+              setIsLoading(false);
+            }
+          })
+          .catch((err) => {
+            console.error("Error fetching clinics:", err);
+          });
+    }
     setRefreshing(false);
+  };
+
+  const handleNavigateMyProfile = () => {
+    router.push("../screens/MyProfile");
   };
 
   const handleSearch = () => {
@@ -207,10 +261,9 @@ const apointment = () => {
   };
 
   const handleLoadMore = () => {
-    if (page >= maxPage) {
-      return;
+    if (page < maxPage) {
+      setPage((prevPage) => prevPage + 1);
     }
-    setPage((prevPage) => prevPage + 1);
   };
 
   useEffect(() => {
@@ -243,9 +296,7 @@ const apointment = () => {
               return unique;
             }, []);
             setClinics(uniqueClinics);
-            if (page === 1) {
-              setMaxPage(res.data.total_pages);
-            }
+            setMaxPage(res.data.total_pages);
             setIsLoading(false);
           } else {
             setClinics([]);
@@ -309,7 +360,7 @@ const apointment = () => {
             />
           </TouchableOpacity>
         ) : (
-          <View className="w-28 h-10 flex-row items-center justify-center">
+          <View className="w-28 h-10 flex-row items-center justify-end">
             <LottieView
               style={{ width: 55, height: 55 }}
               source={require("../../assets/lottie/globe.json")}
@@ -320,12 +371,17 @@ const apointment = () => {
           </View>
         )}
         {userAvatar && (
-          <Image
-            source={{ uri: userAvatar }}
+          <TouchableOpacity
             className="w-9 h-9 rounded-full"
-            transition={0}
-            placeholder={{ blurhash }}
-          />
+            onPress={handleNavigateMyProfile}
+          >
+            <Image
+              source={{ uri: userAvatar }}
+              className="w-full h-full rounded-full"
+              transition={0}
+              placeholder={{ blurhash }}
+            />
+          </TouchableOpacity>
         )}
       </SafeAreaView>
       <DynamicHeader
@@ -342,7 +398,7 @@ const apointment = () => {
             source={require("../../assets/lottie/loading.json")}
             autoPlay
             loop
-            speed={1.5}
+            speed={2}
           />
         </View>
       ) : clinics && clinics.length > 0 ? (
@@ -357,6 +413,7 @@ const apointment = () => {
               name={item.name}
               rating={item.rating}
               distance={5}
+              address={item.address}
               workingHours={item.work_time}
               telephone={item.phone}
               description={item.description}
