@@ -168,7 +168,7 @@ const MinimalPost = ({
           </View>
         </View>
         <View className="w-full h-fit max-h-28 px-3 mt-2">
-          <Text className="text-[14px]" numberOfLines={5} ellipsizeMode="tail">
+          <Text className="text-[14px]" numberOfLines={4} ellipsizeMode="tail">
             {description}
           </Text>
         </View>
