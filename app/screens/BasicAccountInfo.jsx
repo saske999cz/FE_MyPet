@@ -10,14 +10,20 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { images, icons } from "../../constants";
 import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
-import { Link, router } from "expo-router";
-import { Image } from "expo-image";
+import { Link, router, useLocalSearchParams } from "expo-router";
 import RNPickerSelect from "react-native-picker-select";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { user_register } from "../../api/AuthApi";
 
 const BasicAccountInfo = () => {
+  const { username, email, password, confirm_password } =
+    useLocalSearchParams();
   const [form, setForm] = useState({
+    username: username,
+    email: email,
+    password: password,
+    confirm_password: confirm_password,
     full_name: "",
     gender: null,
     birthdate: null,
@@ -65,6 +71,13 @@ const BasicAccountInfo = () => {
       alert("Please fill in all required fields");
     } else {
       setIsSubmitting(true);
+      user_register(form).then((res) => {
+        if (res && res.status === 201) {
+          setIsSubmitting(false);
+          router.replace("../(auth)/sign-in");
+          alert("Account created successfully");
+        }
+      });
     }
   };
 

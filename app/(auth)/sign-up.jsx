@@ -6,7 +6,6 @@ import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
 import { Link } from "expo-router";
 import { router } from "expo-router";
-import { user_register } from "../../api/AuthApi";
 
 const SignUp = () => {
   const [form, setForm] = useState({
@@ -50,22 +49,15 @@ const SignUp = () => {
       alert("Please fill in all required fields");
     } else {
       setIsSubmitting(true);
-      router.replace("../screens/BasicAccountInfo");
-      user_register({
-        username: form.username,
-        email: form.email,
-        password: form.password,
-        confirm_password: form.confirm_password,
-      })
-        .then((res) => {
-          if (res.status === 201) {
-            setIsSubmitting(false);
-            router.replace("../screens/BasicAccountInfo");
-          }
-        })
-        .catch((err) => {
-          alert("Error: " + err.message);
-        });
+      router.push({
+        pathname: "../screens/BasicAccountInfo",
+        params: {
+          username: form.username,
+          email: form.email,
+          password: form.password.toString(),
+          confirm_password: form.confirm_password.toString(),
+        },
+      });
     }
   };
 
